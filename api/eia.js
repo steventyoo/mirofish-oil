@@ -33,26 +33,36 @@ export default async function handler(req, res) {
       fetch(eiaUrl('petroleum/crd/crpdn/data', { duoarea: 'NUS-Z00' }, 'monthly', 6), { signal: AbortSignal.timeout(10000) }),
     ]);
 
-    async function extractSeries(promiseResult) {
-      if (promiseResult.status !== 'fulfilled') return [];
+    async function extractSeries(promiseResult, label) {
+      if (promiseResult.status !== 'fulfilled') return { data: [], debug: label + ': promise rejected: ' + (promiseResult.reason || 'unknown') };
       try {
         const r = promiseResult.value;
-        if (!r.ok) return [];
+        if (!r.ok) return { data: [], debug: label + ': HTTP ' + r.status };
         const data = await r.json();
-        return (data?.response?.data || []).map(d => ({
+        const items = (data?.response?.data || []).map(d => ({
           period: d.period,
           value: parseFloat(d.value),
           units: d['value-units'] || d.units || 'MBBL',
         }));
-      } catch (e) { return []; }
+        return { data: items, debug: label + ': ' + items.length + ' rows' };
+      } catch (e) { return { data: [], debug: label + ': parse error: ' + e.message }; }
     }
 
-    const crude = await extractSeries(crudeRes);
-    const gasoline = await extractSeries(gasolineRes);
-    const distillate = await extractSeries(distillateRes);
-    const cushing = await extractSeries(cushingRes);
-    const utilization = await extractSeries(utilRes);
-    const production = await extractSeries(productionRes);
+    const crudeResult = await extractSeries(crudeRes, 'crude');
+    const gasolineResult = await extractSeries(gasolineRes, 'gasoline');
+    const distillateResult = await extractSeries(distillateRes, 'distillate');
+    const cushingResult = await extractSeries(cushingRes, 'cushing');
+    const utilizationResult = await extractSeries(utilRes, 'utilization');
+    const productionResult = await extractSeries(productionRes, 'production');
+
+    const crude = crudeResult.data;
+    const gasoline = gasolineResult.data;
+    const distillate = distillateResult.data;
+    const cushing = cushingResult.data;
+    const utilization = utilizationResult.data;
+    const production = productionResult.data;
+
+    const _debug = [crudeResult, gasolineResult, distillateResult, cushingResult, utilizationResult, productionResult].map(r => r.debug);
 
     // Compute week-over-week changes
     function weeklyChange(series) {
@@ -96,6 +106,8 @@ export default async function handler(req, res) {
         latest: production[0] || null,
         history: production.slice(0, 6),
       },
+      _debug,
+      _apiKey: apiKey ? apiKey.substring(0, 8) + '...' : 'none',
     });
   } catch (e) {
     res.status(200).json({ error: e.message });
