@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIROFISH — OIL REGIME MONITOR</title>
+<meta name="description" content="MiroFish swarm intelligence detecting regime shifts in crude oil markets. Real-time scenario analysis, structured trade signals, and geopolitical risk mapping.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="MIROFISH — OIL REGIME MONITOR">
+<meta property="og:description" content="Swarm intelligence detecting regime shifts in crude oil. Real-time scenarios, structured trade signals, Hormuz risk mapping.">
+<meta name="theme-color" content="#e63946">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══════ HEADER ═══════ -->
+<div class="header">
+  <div style="display:flex;align-items:center">
+    <span class="breaking-badge">LIVE</span>
+    <div>
+      <div class="main-title">MIROFISH <span>OIL</span> — <span class="gold">REGIME MONITOR</span></div>
+      <div class="subtitle">Swarm intelligence · regime shift detection · structured oil trade signals</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="datestamp" id="live-utc"></div>
+    <div class="source-line">EIA · CFTC · OPEC · Yahoo Finance · NASA FIRMS · S&P Platts · MiroFish Swarm v0.1</div>
+  </div>
+</div>
+
+<!-- ═══════ TICKER ═══════ -->
+<div class="ticker">
+  <div class="ticker-label">SIGNALS</div>
+  <div class="ticker-track"><div class="ticker-inner">
+    <span>REGIME: EVENT_RISK · Confidence 72% · Fair Value $84.92 vs Market $78.42 · Edge +8.3%</span>
+    <span class="sep">///</span>
+    <span>SIGNAL: BUY CALLS — IV rank 38th pctl, cheap vs scenario uncertainty · Horizon 1W</span>
+    <span class="sep">///</span>
+    <span>SWARM CONSENSUS: 64% bullish · 14% bearish · 22% neutral · Disagreement 0.31</span>
+    <span class="sep">///</span>
+    <span>HORMUZ: Risk score 0.68 · 4 shipping incidents (7d) · Insurance premiums spiking</span>
+    <span class="sep">///</span>
+    <span>POSITIONING: Managed money 78th pctl · Short squeeze risk 0.32 · Crowded short</span>
+    <span class="sep">///</span>
+    <span id="ticker-wti"></span>
+    <span class="sep">///</span>
+    <span id="ticker-brent"></span>
+    <span class="sep">///</span>
+    <!-- duplicate for seamless scroll loop -->
+    <span>REGIME: EVENT_RISK · Confidence 72% · Fair Value $84.92 vs Market $78.42 · Edge +8.3%</span>
+    <span class="sep">///</span>
+    <span>SIGNAL: BUY CALLS — IV rank 38th pctl, cheap vs scenario uncertainty · Horizon 1W</span>
+    <span class="sep">///</span>
+    <span>SWARM CONSENSUS: 64% bullish · 14% bearish · 22% neutral · Disagreement 0.31</span>
+    <span class="sep">///</span>
+    <span>HORMUZ: Risk score 0.68 · 4 shipping incidents (7d) · Insurance premiums spiking</span>
+    <span class="sep">///</span>
+    <span>POSITIONING: Managed money 78th pctl · Short squeeze risk 0.32 · Crowded short</span>
+    <span class="sep">///</span>
+    <span id="ticker-wti2"></span>
+    <span class="sep">///</span>
+    <span id="ticker-brent2"></span>
+  </div></div>
+</div>
+
+<!-- ═══════ LAYOUT ═══════ -->
+<div class="layout">
+
+  <!-- ═══ LEFT PANEL ═══ -->
+  <div class="panel panel-l">
+
+    <div class="sec">
+      <div class="sec-label">World State — Front Month</div>
+      <div class="bignum">$78.42 <span class="u">WTI CL1</span></div>
+      <div class="note">Curve: <strong style="color:var(--gold)">Backwardation</strong> · Front-back spread tightening</div>
+      <div class="note">Realized Vol (20d): 28.4% · ATR: $1.82</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">
+        <span style="display:flex;align-items:center;gap:6px;flex:1">
+          <span class="lp-dot"></span> Live Commodity Prices
+        </span>
+        <span id="lp-timestamp" style="font-size:7px;color:var(--muted);white-space:nowrap"></span>
+      </div>
+      <div class="live-prices">
+        <div class="lp-card">
+          <div class="lp-ticker">WTI (CL=F)</div>
+          <div class="lp-price" id="lp-wti-price">$78.42</div>
+          <div class="lp-change up" id="lp-wti-change">▲ +1.87 (+2.44%)</div>
+        </div>
+        <div class="lp-card">
+          <div class="lp-ticker">Brent (BZ=F)</div>
+          <div class="lp-price" id="lp-brent-price">$82.15</div>
+          <div class="lp-change up" id="lp-brent-change">▲ +1.63 (+2.02%)</div>
+        </div>
+        <div class="lp-card">
+          <div class="lp-ticker">VIX</div>
+          <div class="lp-price">18.72</div>
+          <div class="lp-change up">▲ +1.45 (+8.39%)</div>
+        </div>
+      </div>
+      <div class="note"><span class="src">Mock data · Production connects Yahoo Finance</span></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Regime Classification</div>
+      <div class="regime-box">
+        <div class="rl">Current Regime · 72% Confidence</div>
+        <div class="rv" style="color:var(--accent)">EVENT RISK</div>
+      </div>
+      <div id="regime-bars" style="margin-top:10px"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Scenario Engine — Price Ranges</div>
+      <div id="scenario-cards"></div>
+      <div class="callout-box callout-gold" style="margin-top:8px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:7.5px;color:var(--gold);text-transform:uppercase;letter-spacing:1px">Expected Value Engine</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);line-height:1">$84.92 <span style="font-size:14px;color:var(--muted)">Fair Value</span></div>
+        <div class="note">Asymmetry ratio: 1.42 · Weighted upside > downside · Edge: +$6.50 (+8.3%)</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Inventory Surprises — Latest EIA</div>
+      <div class="bar-row">
+        <div class="bar-top"><span>Crude (bullish draw)</span><span class="bar-val">-2.8M bbl vs -1.2M exp</span></div>
+        <div class="bar-bg"><div class="bar-fg" data-w="72" style="background:var(--green)"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-top"><span>Gasoline (mild build)</span><span class="bar-val">+0.4M bbl vs -0.3M exp</span></div>
+        <div class="bar-bg"><div class="bar-fg" data-w="35" style="background:var(--accent)"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-top"><span>Distillate (draw)</span><span class="bar-val">-1.1M bbl vs -0.5M exp</span></div>
+        <div class="bar-bg"><div class="bar-fg" data-w="55" style="background:var(--green)"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-top"><span>Cushing Storage</span><span class="bar-val">23.1M bbl — Draws accelerating</span></div>
+        <div class="bar-bg"><div class="bar-fg" data-w="42" style="background:var(--gold)"></div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">CFTC Positioning — Managed Money</div>
+      <div class="sg">
+        <div class="sc"><div class="v" style="color:var(--gold)">78th</div><div class="l">Net Length Percentile</div></div>
+        <div class="sc"><div class="v" style="color:var(--accent)">0.32</div><div class="l">Short Squeeze Risk</div></div>
+        <div class="sc"><div class="v" style="color:var(--warn)">0.68</div><div class="l">Crowding Score</div></div>
+        <div class="sc"><div class="v" style="color:var(--teal)">+12.4%</div><div class="l">OI Change (1w)</div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Macro Cross-Asset Snapshot</div>
+      <div class="sg">
+        <div class="sc"><div class="v" style="color:var(--accent);font-size:20px">104.32</div><div class="l">DXY · Weakening</div></div>
+        <div class="sc"><div class="v" style="color:var(--green);font-size:20px">5,842</div><div class="l">SPX · Risk Off</div></div>
+        <div class="sc"><div class="v" style="color:var(--gold);font-size:20px">4.38%</div><div class="l">US 10Y · Higher</div></div>
+        <div class="sc"><div class="v" style="color:var(--teal);font-size:20px">$2,985</div><div class="l">Gold · Safety bid</div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Volatility State — Options</div>
+      <div class="sg">
+        <div class="sc"><div class="v" style="color:var(--gold)">38th</div><div class="l">IV Rank Percentile</div></div>
+        <div class="sc"><div class="v" style="color:var(--accent)">-0.22</div><div class="l">IV vs Realized Spread</div></div>
+      </div>
+      <div class="callout-box callout-red" style="margin-top:8px">
+        <div style="font-size:9px;color:var(--text);line-height:1.4">
+          <strong style="color:var(--accent)">Vol underpriced.</strong> IV rank at 38th pctl with scenario uncertainty this high suggests options are cheap.
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Hormuz Bypass Infrastructure</div>
+      <div id="bypass-pipes"></div>
+      <div class="bypass-callout">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:7.5px;color:var(--muted);margin-bottom:3px">Available Bypass Capacity</div>
+        <div class="bv">~2.6M <span class="bu">b/d</span></div>
+        <div class="bs">vs 20M transiting — <strong style="color:var(--accent)">only 13% covered</strong></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ MAP ═══ -->
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="map-risk">
+      <div class="mr-label">Hormuz Risk Score</div>
+      <div class="mr-value">0.68</div>
+      <div class="mr-sub">4 incidents (7d) · Elevated</div>
+    </div>
+    <div class="map-legend" id="map-legend">
+      <div class="ml-title">Map Legend</div>
+      <div class="ml-body">
+        <div class="ml-row">
+          <svg width="22" height="4"><line x1="0" y1="2" x2="22" y2="2" stroke="#f4a261" stroke-width="2" stroke-dasharray="6,3"/></svg>
+          <span style="color:#f4a261">Tanker route</span>
+        </div>
+        <div class="ml-row">
+          <svg width="22" height="4"><line x1="0" y1="2" x2="22" y2="2" stroke="#52b788" stroke-width="2" stroke-dasharray="5,3"/></svg>
+          <span style="color:#52b788">Saudi E-W pipeline</span>
+        </div>
+        <div class="ml-row">
+          <svg width="22" height="4"><line x1="0" y1="2" x2="22" y2="2" stroke="#2a9d8f" stroke-width="2" stroke-dasharray="4,3"/></svg>
+          <span style="color:#2a9d8f">UAE Fujairah bypass</span>
+        </div>
+        <div style="height:5px"></div>
+        <div class="ml-row"><span style="font-size:10px;width:10px;text-align:center">🇺🇸</span><span style="color:#6a8caf">US base</span> <span style="font-size:10px;width:10px;text-align:center">🇮🇷</span><span style="color:#6a8caf">Iran base</span></div>
+        <div class="ml-row"><span style="font-size:10px;width:10px;text-align:center">☢</span><span style="color:#c77dff">Nuclear facility</span></div>
+        <div class="ml-row"><div class="ml-dotl" style="background:#ff4500"></div><span style="color:#ff4500">Fire hotspot</span></div>
+      </div>
+    </div>
+    <div class="layer-toggle" id="layer-toggle">
+      <div class="lt-title">Data Layers</div>
+      <div class="lt-body">
+        <label class="lt-row"><input type="checkbox" id="tog-bases" checked><span style="font-size:11px">🏴</span><span style="color:#6a8caf">Military Bases</span></label>
+        <label class="lt-row"><input type="checkbox" id="tog-nuclear" checked><span style="font-size:11px">☢️</span><span style="color:#c77dff">Nuclear Sites</span></label>
+        <label class="lt-row"><input type="checkbox" id="tog-fires" checked><span style="font-size:11px">🔥</span><span style="color:#ff4500">Fire Hotspots</span></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <div class="panel panel-r">
+
+    <div class="sec">
+      <div class="sec-label">Active Signal — Trade Recommendation</div>
+      <div class="signal-box" id="signal-box"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Recommended Trade Structure</div>
+      <div class="trade-box" id="trade-box"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Swarm Consensus — 8 Agents</div>
+      <div class="callout-box callout-purple" style="margin-bottom:8px" id="consensus-box"></div>
+      <div class="note" style="margin-bottom:4px"><strong style="color:var(--white)">Top consensus drivers:</strong></div>
+      <div class="note">◆ Hormuz disruption risk underpriced</div>
+      <div class="note">◆ IV too cheap for scenario uncertainty</div>
+      <div class="note">◆ Physical tightness signals</div>
+      <div class="note" style="margin-top:6px"><strong style="color:var(--white)">Top disagreement:</strong></div>
+      <div class="note" style="color:var(--gold)">◇ Demand outlook divergence (China)</div>
+      <div class="note" style="color:var(--gold)">◇ Trend signal timing</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Swarm Agent Views</div>
+      <div id="agent-cards"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">
+        <span style="display:flex;align-items:center;gap:6px;flex:1">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;animation:blink 1s infinite;flex-shrink:0"></span>
+          Live Wire — News Feed
+        </span>
+      </div>
+      <div id="news-feed"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Historical Precedents</div>
+      <div id="precedent-list"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Upcoming Catalysts</div>
+      <div id="catalyst-list"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Scripts: data first, then app logic -->
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
