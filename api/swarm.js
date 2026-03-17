@@ -86,6 +86,7 @@ Analyze this state from your role as ${agent.name} (${agent.role}). Return your 
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 512,
+      temperature: 0,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
     }),
