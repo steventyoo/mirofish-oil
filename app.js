@@ -937,6 +937,108 @@
     }
   }
 
+  // ═══════ EIA INVENTORY DATA (real weekly petroleum stats) ═══════
+  async function loadEIA() {
+    try {
+      var res = await fetchTimeout('/api/eia', 12000);
+      if (!res.ok) return;
+      var data = await res.json();
+      if (data.error) return;
+
+      // Find the inventory section in left panel and update it
+      var sections = document.querySelectorAll('.sec-label');
+      sections.forEach(function(label) {
+        if (label.textContent.includes('Inventory')) {
+          var sec = label.parentElement;
+          var html = '';
+
+          // Crude
+          var crude = data.crude_stocks;
+          if (crude && crude.change) {
+            var chg = crude.change.change;
+            var chgStr = (chg > 0 ? '+' : '') + (chg / 1000).toFixed(1) + 'M bbl';
+            var color = chg < 0 ? 'var(--green)' : 'var(--accent)';
+            var pct = Math.min(Math.abs(chg) / 100, 100);
+            html += '<div class="bar-row"><div class="bar-top"><span>Crude (' + (chg < 0 ? 'draw' : 'build') + ')</span><span class="bar-val">' + chgStr + '</span></div>';
+            html += '<div class="bar-bg"><div class="bar-fg" style="background:' + color + ';width:' + pct + '%"></div></div></div>';
+          }
+
+          // Gasoline
+          var gas = data.gasoline_stocks;
+          if (gas && gas.change) {
+            var chg = gas.change.change;
+            var chgStr = (chg > 0 ? '+' : '') + (chg / 1000).toFixed(1) + 'M bbl';
+            var color = chg < 0 ? 'var(--green)' : 'var(--accent)';
+            var pct = Math.min(Math.abs(chg) / 100, 100);
+            html += '<div class="bar-row"><div class="bar-top"><span>Gasoline (' + (chg < 0 ? 'draw' : 'build') + ')</span><span class="bar-val">' + chgStr + '</span></div>';
+            html += '<div class="bar-bg"><div class="bar-fg" style="background:' + color + ';width:' + pct + '%"></div></div></div>';
+          }
+
+          // Distillate
+          var dist = data.distillate_stocks;
+          if (dist && dist.change) {
+            var chg = dist.change.change;
+            var chgStr = (chg > 0 ? '+' : '') + (chg / 1000).toFixed(1) + 'M bbl';
+            var color = chg < 0 ? 'var(--green)' : 'var(--accent)';
+            var pct = Math.min(Math.abs(chg) / 100, 100);
+            html += '<div class="bar-row"><div class="bar-top"><span>Distillate (' + (chg < 0 ? 'draw' : 'build') + ')</span><span class="bar-val">' + chgStr + '</span></div>';
+            html += '<div class="bar-bg"><div class="bar-fg" style="background:' + color + ';width:' + pct + '%"></div></div></div>';
+          }
+
+          // Cushing
+          var cush = data.cushing_stocks;
+          if (cush && cush.latest) {
+            var cushVal = (cush.latest.value / 1000).toFixed(1);
+            var cushChg = cush.change ? (cush.change.change / 1000).toFixed(1) : '?';
+            html += '<div class="bar-row"><div class="bar-top"><span>Cushing Storage</span><span class="bar-val">' + cushVal + 'M bbl (' + (cushChg > 0 ? '+' : '') + cushChg + 'M)</span></div>';
+            html += '<div class="bar-bg"><div class="bar-fg" style="background:var(--gold);width:' + Math.min(cush.latest.value / 1000, 100) + '%"></div></div></div>';
+          }
+
+          if (html) {
+            // Update label to show LIVE
+            label.innerHTML = '<span style="display:flex;align-items:center;gap:6px;flex:1"><span class="lp-dot"></span> Inventory — Latest EIA</span><span class="src" style="margin-left:auto">LIVE</span>';
+            // Replace bar content (keep the label)
+            var bars = sec.querySelectorAll('.bar-row');
+            bars.forEach(function(b) { b.remove(); });
+            label.insertAdjacentHTML('afterend', html);
+          }
+        }
+      });
+    } catch (e) { /* keep mock data */ }
+  }
+
+  // ═══════ CFTC POSITIONING DATA (real COT report) ═══════
+  async function loadCFTC() {
+    try {
+      var res = await fetchTimeout('/api/cftc', 12000);
+      if (!res.ok) return;
+      var data = await res.json();
+      if (data.error || !data.latest) return;
+
+      var mm = data.latest.managed_money;
+      var oi = data.latest.open_interest;
+
+      // Find positioning section
+      var sections = document.querySelectorAll('.sec-label');
+      sections.forEach(function(label) {
+        if (label.textContent.includes('Positioning')) {
+          var sec = label.parentElement;
+          var grid = sec.querySelector('.sg');
+          if (grid) {
+            grid.innerHTML = ''
+              + '<div class="sc"><div class="v" style="color:var(--gold)">' + mm.percentile + 'th</div><div class="l">Net Length Pctl</div></div>'
+              + '<div class="sc"><div class="v" style="color:var(--accent)">' + data.latest.short_squeeze_risk + '</div><div class="l">Squeeze Risk</div></div>'
+              + '<div class="sc"><div class="v" style="color:var(--warn)">' + (mm.net / 1000).toFixed(0) + 'K</div><div class="l">MM Net Contracts</div></div>'
+              + '<div class="sc"><div class="v" style="color:var(--teal)">' + (mm.net_change_1w > 0 ? '+' : '') + (mm.net_change_1w / 1000).toFixed(1) + 'K</div><div class="l">Net Change (1w)</div></div>';
+
+            // Update label
+            label.innerHTML = '<span style="display:flex;align-items:center;gap:6px;flex:1"><span class="lp-dot"></span> CFTC Positioning</span><span class="src" style="margin-left:auto">LIVE · ' + data.latest.date + '</span>';
+          }
+        }
+      });
+    } catch (e) { /* keep mock data */ }
+  }
+
   // ═══════ LIVE SCENARIO PRICING (based on live Brent price) ═══════
   function updateScenariosFromLivePrice(brentPrice) {
     if (!brentPrice || brentPrice <= 0) return;
@@ -1092,6 +1194,14 @@
     // Live data: Options chain
     setTimeout(loadOptions, 2500);
     setInterval(loadOptions, 2 * 60000);
+
+    // Live data: EIA inventories (weekly, refresh hourly)
+    setTimeout(loadEIA, 3000);
+    setInterval(loadEIA, 60 * 60000);
+
+    // Live data: CFTC positioning (weekly, refresh hourly)
+    setTimeout(loadCFTC, 3500);
+    setInterval(loadCFTC, 60 * 60000);
 
     // Live data: Swarm (real Claude API calls — expensive, run every 30 min)
     setTimeout(loadSwarm, 3000);
