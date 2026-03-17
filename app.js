@@ -523,32 +523,33 @@
     let geoHtml = '';
     for (const gc of geoContracts) {
       try {
-        const res = await fetchTimeout(`https://gamma-api.polymarket.com/events?slug=${gc.slug}`, 6000);
+        const res = await fetchTimeout('https://gamma-api.polymarket.com/events?slug=' + gc.slug, 6000);
         const data = await res.json();
         if (data && data[0] && data[0].markets && data[0].markets[0]) {
           const m = data[0].markets[0];
           const prices = JSON.parse(m.outcomePrices || '["0","0"]');
           const yesProb = Math.round(parseFloat(prices[0]) * 100);
           const vol = Math.round(parseFloat(m.volume || 0));
-          const volStr = vol > 1000000 ? `$${(vol/1000000).toFixed(1)}M` : vol > 1000 ? `$${(vol/1000).toFixed(0)}K` : `$${vol}`;
-          geoHtml += `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)">
-            <span style="font-size:9px;color:var(--text);flex:1">${gc.label}</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:${yesProb > 50 ? 'var(--green)' : 'var(--accent)};min-width:35px;text-align:right">${yesProb}%</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:7px;color:var(--muted);min-width:45px;text-align:right">${volStr}</span>
-          </div>`;
+          const volStr = vol > 1000000 ? '$' + (vol/1000000).toFixed(1) + 'M' : vol > 1000 ? '$' + (vol/1000).toFixed(0) + 'K' : '$' + vol;
+          var probColor = yesProb > 50 ? 'var(--green)' : 'var(--accent)';
+          geoHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+            + '<span style="font-size:9px;color:var(--text);flex:1">' + gc.label + '</span>'
+            + '<span style="font-family:IBM Plex Mono,monospace;font-size:11px;font-weight:600;color:' + probColor + ';min-width:35px;text-align:right">' + yesProb + '%</span>'
+            + '<span style="font-family:IBM Plex Mono,monospace;font-size:7px;color:var(--muted);min-width:45px;text-align:right">' + volStr + '</span>'
+            + '</div>';
         }
       } catch (e) { /* silent */ }
     }
 
     if (geoHtml) {
-      html += `<div class="sec-label" style="margin-top:12px">Polymarket — Geopolitical Contracts<span class="src" style="margin-left:auto">LIVE</span></div>`;
+      html += '<div class="sec-label" style="margin-top:12px">Polymarket \u2014 Geopolitical Contracts<span class="src" style="margin-left:auto">LIVE</span></div>';
       html += geoHtml;
     }
 
     if (html) {
       container.innerHTML = html;
     } else {
-      container.innerHTML = `<div class="note">Polymarket data unavailable</div>`;
+      container.innerHTML = '<div class="note">Polymarket data unavailable</div>';
     }
   }
 
