@@ -190,41 +190,61 @@
 
   </div>
 
-  <!-- ═══ MAP ═══ -->
-  <div class="map-wrap">
-    <div id="map"></div>
-    <div class="map-risk">
-      <div class="mr-label">Hormuz Risk Score</div>
-      <div class="mr-value">0.68</div>
-      <div class="mr-sub">4 incidents (7d) · Elevated</div>
-    </div>
-    <div class="map-legend" id="map-legend">
-      <div class="ml-title">Map Legend</div>
-      <div class="ml-body">
-        <div class="ml-row">
-          <svg width="22" height="4"><line x1="0" y1="2" x2="22" y2="2" stroke="#f4a261" stroke-width="2" stroke-dasharray="6,3"/></svg>
-          <span style="color:#f4a261">Tanker route</span>
+  <!-- ═══ CENTER COLUMN ═══ -->
+  <div class="center-col">
+    <!-- MAP (shorter) -->
+    <div class="map-wrap">
+      <div id="map"></div>
+      <div class="map-risk">
+        <div class="mr-label">Hormuz Risk Score</div>
+        <div class="mr-value">0.68</div>
+        <div class="mr-sub">4 incidents (7d) · Elevated</div>
+      </div>
+      <div class="map-legend" id="map-legend">
+        <div class="ml-title">Map Legend</div>
+        <div class="ml-body">
+          <div class="ml-row">
+            <svg width="22" height="4"><line x1="0" y1="2" x2="22" y2="2" stroke="#f4a261" stroke-width="2" stroke-dasharray="6,3"/></svg>
+            <span style="color:#f4a261">Tanker route</span>
+          </div>
+          <div class="ml-row">
+            <svg width="22" height="4"><line x1="0" y1="2" x2="22" y2="2" stroke="#52b788" stroke-width="2" stroke-dasharray="5,3"/></svg>
+            <span style="color:#52b788">Saudi E-W pipeline</span>
+          </div>
+          <div class="ml-row">
+            <svg width="22" height="4"><line x1="0" y1="2" x2="22" y2="2" stroke="#2a9d8f" stroke-width="2" stroke-dasharray="4,3"/></svg>
+            <span style="color:#2a9d8f">UAE Fujairah bypass</span>
+          </div>
+          <div style="height:5px"></div>
+          <div class="ml-row"><span style="font-size:10px;width:10px;text-align:center">🇺🇸</span><span style="color:#6a8caf">US base</span> <span style="font-size:10px;width:10px;text-align:center">🇮🇷</span><span style="color:#6a8caf">Iran base</span></div>
+          <div class="ml-row"><span style="font-size:10px;width:10px;text-align:center">☢</span><span style="color:#c77dff">Nuclear facility</span></div>
+          <div class="ml-row"><div class="ml-dotl" style="background:#ff4500"></div><span style="color:#ff4500">Fire hotspot</span></div>
         </div>
-        <div class="ml-row">
-          <svg width="22" height="4"><line x1="0" y1="2" x2="22" y2="2" stroke="#52b788" stroke-width="2" stroke-dasharray="5,3"/></svg>
-          <span style="color:#52b788">Saudi E-W pipeline</span>
+      </div>
+      <div class="layer-toggle" id="layer-toggle">
+        <div class="lt-title">Data Layers</div>
+        <div class="lt-body">
+          <label class="lt-row"><input type="checkbox" id="tog-bases" checked><span style="font-size:11px">🏴</span><span style="color:#6a8caf">Military Bases</span></label>
+          <label class="lt-row"><input type="checkbox" id="tog-nuclear" checked><span style="font-size:11px">☢️</span><span style="color:#c77dff">Nuclear Sites</span></label>
+          <label class="lt-row"><input type="checkbox" id="tog-fires" checked><span style="font-size:11px">🔥</span><span style="color:#ff4500">Fire Hotspots</span></label>
         </div>
-        <div class="ml-row">
-          <svg width="22" height="4"><line x1="0" y1="2" x2="22" y2="2" stroke="#2a9d8f" stroke-width="2" stroke-dasharray="4,3"/></svg>
-          <span style="color:#2a9d8f">UAE Fujairah bypass</span>
-        </div>
-        <div style="height:5px"></div>
-        <div class="ml-row"><span style="font-size:10px;width:10px;text-align:center">🇺🇸</span><span style="color:#6a8caf">US base</span> <span style="font-size:10px;width:10px;text-align:center">🇮🇷</span><span style="color:#6a8caf">Iran base</span></div>
-        <div class="ml-row"><span style="font-size:10px;width:10px;text-align:center">☢</span><span style="color:#c77dff">Nuclear facility</span></div>
-        <div class="ml-row"><div class="ml-dotl" style="background:#ff4500"></div><span style="color:#ff4500">Fire hotspot</span></div>
       </div>
     </div>
-    <div class="layer-toggle" id="layer-toggle">
-      <div class="lt-title">Data Layers</div>
-      <div class="lt-body">
-        <label class="lt-row"><input type="checkbox" id="tog-bases" checked><span style="font-size:11px">🏴</span><span style="color:#6a8caf">Military Bases</span></label>
-        <label class="lt-row"><input type="checkbox" id="tog-nuclear" checked><span style="font-size:11px">☢️</span><span style="color:#c77dff">Nuclear Sites</span></label>
-        <label class="lt-row"><input type="checkbox" id="tog-fires" checked><span style="font-size:11px">🔥</span><span style="color:#ff4500">Fire Hotspots</span></label>
+
+    <!-- PREDICTION MARKETS + FUTURES (below map) -->
+    <div class="center-bottom">
+      <div class="sec">
+        <div class="sec-label">
+          <span style="display:flex;align-items:center;gap:6px;flex:1">
+            <span class="lp-dot"></span> Prediction Markets
+          </span>
+          <span style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace">POLYMARKET · LIVE</span>
+        </div>
+        <div id="polymarket-data"><div class="note">Loading Polymarket data...</div></div>
+      </div>
+      <div class="sec">
+        <div class="sec-label">Futures Term Structure</div>
+        <div id="futures-curve"><div class="note">Loading futures curve...</div></div>
       </div>
     </div>
   </div>
@@ -267,16 +287,6 @@
         </span>
       </div>
       <div id="news-feed"></div>
-    </div>
-
-    <div class="sec">
-      <div class="sec-label">
-        <span style="display:flex;align-items:center;gap:6px;flex:1">
-          <span class="lp-dot"></span> Prediction Markets
-        </span>
-        <span style="font-size:7px;color:var(--muted);font-family:'IBM Plex Mono',monospace">POLYMARKET</span>
-      </div>
-      <div id="polymarket-data"><div class="note">Loading Polymarket data...</div></div>
     </div>
 
     <div class="sec">

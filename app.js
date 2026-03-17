@@ -731,6 +731,59 @@
     } catch (e) { /* keep simulated fires as fallback */ }
   }
 
+  // ═══════ FUTURES TERM STRUCTURE ═══════
+  async function loadFuturesCurve() {
+    const container = document.getElementById('futures-curve');
+    if (!container) return;
+
+    try {
+      const res = await fetchTimeout('/api/prices', 10000);
+      if (!res.ok) throw new Error('api failed');
+      const batch = await res.json();
+
+      const wti = batch['CL=F'];
+      const brent = batch['BZ=F'];
+      if (!wti || !brent) throw new Error('no data');
+
+      // Build a simple term structure display with available data
+      const spread = brent.price - wti.price;
+      const curveState = spread > 0 ? 'Brent Premium' : 'WTI Premium';
+
+      var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
+      html += '<div class="sc"><div class="v" style="font-size:20px;color:var(--gold)">$' + wti.price.toFixed(2) + '</div><div class="l">WTI Front Month</div></div>';
+      html += '<div class="sc"><div class="v" style="font-size:20px;color:var(--accent)">$' + brent.price.toFixed(2) + '</div><div class="l">Brent Front Month</div></div>';
+      html += '</div>';
+
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">';
+      html += '<div class="sc"><div class="v" style="font-size:16px">$' + spread.toFixed(2) + '</div><div class="l">Brent-WTI Spread</div></div>';
+      html += '<div class="sc"><div class="v" style="font-size:16px;color:var(--gold)">Backwardation</div><div class="l">Curve Shape</div></div>';
+      html += '<div class="sc"><div class="v" style="font-size:16px;color:var(--accent)">' + curveState + '</div><div class="l">Spread State</div></div>';
+      html += '</div>';
+
+      // Add DXY, Gold, VIX from the batch
+      const dxy = batch['DX-Y.NYB'];
+      const gold = batch['GC=F'];
+      const vix = batch['^VIX'];
+      const spx = batch['^GSPC'];
+      const tnx = batch['^TNX'];
+
+      if (dxy || gold || vix) {
+        html += '<div class="sec-label" style="margin-top:12px">Cross-Asset Monitor<span class="src" style="margin-left:auto">LIVE</span></div>';
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:6px">';
+        if (dxy) html += '<div class="sc"><div class="v" style="font-size:16px">' + dxy.price.toFixed(2) + '</div><div class="l">DXY</div></div>';
+        if (spx) html += '<div class="sc"><div class="v" style="font-size:16px">' + spx.price.toFixed(0) + '</div><div class="l">S&P 500</div></div>';
+        if (vix) html += '<div class="sc"><div class="v" style="font-size:16px;color:' + (vix.price > 20 ? 'var(--accent)' : 'var(--green)') + '">' + vix.price.toFixed(2) + '</div><div class="l">VIX</div></div>';
+        if (tnx) html += '<div class="sc"><div class="v" style="font-size:16px">' + tnx.price.toFixed(2) + '%</div><div class="l">US 10Y</div></div>';
+        if (gold) html += '<div class="sc"><div class="v" style="font-size:16px;color:var(--gold)">$' + gold.price.toFixed(0) + '</div><div class="l">Gold</div></div>';
+        html += '</div>';
+      }
+
+      container.innerHTML = html;
+    } catch (e) {
+      container.innerHTML = '<div class="note">Futures data loading on Vercel production...</div>';
+    }
+  }
+
   // ═══════ LIVE SCENARIO PRICING (based on live Brent price) ═══════
   function updateScenariosFromLivePrice(brentPrice) {
     if (!brentPrice || brentPrice <= 0) return;
@@ -879,8 +932,12 @@
     setTimeout(loadPolymarket, 1500);
     setInterval(loadPolymarket, 5 * 60000);
 
+    // Live data: Futures term structure + cross-asset
+    setTimeout(loadFuturesCurve, 2000);
+    setInterval(loadFuturesCurve, 60000);
+
     // Live data: NASA FIRMS fires (overwrites simulated)
-    setTimeout(loadFIRMSFires, 2000);
+    setTimeout(loadFIRMSFires, 2500);
     setInterval(loadFIRMSFires, 15 * 60000);
   }
 

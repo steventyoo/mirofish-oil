@@ -275,8 +275,21 @@ html, body {
 .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .leg-pct { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--gold); margin-left: auto; }
 
+/* ── CENTER COLUMN ── */
+.center-col {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden; min-width: 0;
+}
+.center-bottom {
+  flex-shrink: 0; background: var(--panel);
+  border-top: 1px solid var(--border);
+  overflow-y: auto; max-height: 280px;
+}
+.center-bottom::-webkit-scrollbar { width: 2px; }
+.center-bottom::-webkit-scrollbar-thumb { background: var(--border); }
+
 /* ── MAP ── */
-.map-wrap { flex: 1; position: relative; }
+.map-wrap { flex: 1; position: relative; min-height: 280px; }
 #map { width: 100%; height: 100%; }
 
 .map-risk {
@@ -359,8 +372,10 @@ html, body {
   .layout { flex-direction: column; height: auto; }
   .panel { width: 100%; overflow-y: visible; border: none !important; border-bottom: 1px solid var(--border) !important; }
   .panel-l { order: 1; }
-  .map-wrap { order: 2; height: 55vh; min-height: 320px; flex: none; }
-  #map { height: 55vh; min-height: 320px; }
+  .center-col { order: 2; flex: none; }
+  .map-wrap { height: 50vh; min-height: 280px; flex: none; }
+  #map { height: 50vh; min-height: 280px; }
+  .center-bottom { max-height: none; }
   .panel-r { order: 3; width: 100%; }
   .live-prices { flex-direction: row; }
 }
