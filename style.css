@@ -283,7 +283,7 @@ html, body {
 .center-bottom {
   flex-shrink: 0; background: var(--panel);
   border-top: 1px solid var(--border);
-  overflow-y: auto; max-height: 280px;
+  overflow-y: auto; max-height: 400px;
 }
 .center-bottom::-webkit-scrollbar { width: 2px; }
 .center-bottom::-webkit-scrollbar-thumb { background: var(--border); }

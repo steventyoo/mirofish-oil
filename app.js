@@ -784,6 +784,159 @@
     }
   }
 
+  // ═══════ LIVE SWARM (real Claude API calls) ═══════
+  async function loadSwarm() {
+    const agentContainer = document.getElementById('agent-cards');
+    const consensusContainer = document.getElementById('consensus-box');
+    const signalContainer = document.getElementById('signal-box');
+    if (!agentContainer) return;
+
+    try {
+      const res = await fetchTimeout('/api/swarm', 30000);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.error || !data.agents || data.agents.length === 0) return;
+
+      // Render live agent cards (overwrite mock data)
+      agentContainer.innerHTML = data.agents.map(function(a) {
+        var dirColor = a.direction === 'bullish' ? 'var(--green)' : a.direction === 'bearish' ? 'var(--accent)' : 'var(--blue)';
+        var expr = (a.recommended_expression || 'no_trade').replace(/_/g, ' ').toUpperCase();
+        var drivers = (a.top_drivers || []).map(function(d) { return '<li>' + d + '</li>'; }).join('');
+        var conf = Math.round((a.confidence || 0) * 100);
+        return '<div class="agent-card">'
+          + '<div class="agent-header"><div>'
+          + '<div class="agent-name">' + a.agent_name + '</div>'
+          + '</div>'
+          + '<span class="agent-dir ' + a.direction + '">' + a.direction + '</span></div>'
+          + '<div class="agent-expr">\u2192 ' + expr + ' (' + conf + '% conf)</div>'
+          + '<ul class="agent-drivers">' + drivers + '</ul>'
+          + '<div class="agent-conf-bar"><div class="agent-conf-fill" style="background:' + dirColor + ';width:' + conf + '%"></div></div>'
+          + '</div>';
+      }).join('');
+
+      // Update consensus
+      if (data.consensus && consensusContainer) {
+        var c = data.consensus;
+        consensusContainer.innerHTML = ''
+          + '<div class="consensus-row"><span class="consensus-label">Bullish Probability</span><span class="consensus-value" style="color:var(--green)">' + c.bullish_prob + '%</span></div>'
+          + '<div class="consensus-row"><span class="consensus-label">Bearish Probability</span><span class="consensus-value" style="color:var(--accent)">' + c.bearish_prob + '%</span></div>'
+          + '<div class="consensus-row"><span class="consensus-label">Neutral</span><span class="consensus-value">' + c.neutral_prob + '%</span></div>'
+          + '<div class="consensus-row"><span class="consensus-label">Avg Confidence</span><span class="consensus-value">' + c.avg_confidence + '%</span></div>'
+          + '<div class="consensus-row"><span class="consensus-label">Vol Expansion P</span><span class="consensus-value" style="color:var(--gold)">' + c.vol_expansion_prob + '%</span></div>'
+          + '<div class="consensus-row"><span class="consensus-label">Disagreement</span><span class="consensus-value">' + c.disagreement_score + '</span></div>';
+
+        // Update top drivers
+        var driversEl = consensusContainer.parentElement;
+        if (driversEl && c.top_drivers && c.top_drivers.length > 0) {
+          var existingDriverNotes = driversEl.querySelectorAll('.note');
+          // Clear old driver notes and replace
+          var driverHtml = '<div class="note" style="margin-top:8px"><strong style="color:var(--white)">Top consensus drivers (LIVE):</strong></div>';
+          c.top_drivers.slice(0, 4).forEach(function(d) {
+            driverHtml += '<div class="note">\u25C6 ' + d + '</div>';
+          });
+          // Find the right spot after the consensus box
+          var insertPoint = consensusContainer.nextSibling;
+          while (insertPoint && insertPoint.className === 'note') {
+            var next = insertPoint.nextSibling;
+            insertPoint.remove();
+            insertPoint = next;
+          }
+          consensusContainer.insertAdjacentHTML('afterend', driverHtml);
+        }
+      }
+
+      // Update signal from consensus
+      if (data.consensus && signalContainer) {
+        var c = data.consensus;
+        var action = c.top_expression ? c.top_expression.replace(/_/g, ' ').toUpperCase() : 'NO TRADE';
+        var edgeColor = c.bullish_prob > 50 ? 'var(--green)' : 'var(--accent)';
+        signalContainer.querySelector('.signal-action').textContent = action;
+      }
+
+      // Add a "LIVE SWARM" indicator
+      var swarmLabel = document.querySelector('.sec-label');
+      // Find the swarm agent views label specifically
+      document.querySelectorAll('.sec-label').forEach(function(el) {
+        if (el.textContent.includes('Swarm Agent')) {
+          el.innerHTML = '<span style="display:flex;align-items:center;gap:6px;flex:1"><span class="lp-dot"></span> Swarm Agent Views</span><span class="src" style="margin-left:auto">LIVE · ' + data.agents.length + ' agents</span>';
+        }
+        if (el.textContent.includes('Swarm Consensus')) {
+          el.innerHTML = '<span style="display:flex;align-items:center;gap:6px;flex:1"><span class="lp-dot"></span> Swarm Consensus</span><span class="src" style="margin-left:auto">LIVE</span>';
+        }
+      });
+
+    } catch (e) { /* keep mock data as fallback */ }
+  }
+
+  // ═══════ LIVE OPTIONS CHAIN ═══════
+  async function loadOptions() {
+    var container = document.getElementById('options-chain');
+    if (!container) return;
+
+    try {
+      var res = await fetchTimeout('/api/options', 12000);
+      if (!res.ok) throw new Error('api failed');
+      var data = await res.json();
+      if (data.error || !data.calls || data.calls.length === 0) throw new Error(data.error || 'no data');
+
+      var html = '';
+      var spot = data.spotPrice;
+
+      // Summary stats
+      if (data.summary) {
+        var s = data.summary;
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px;margin-bottom:10px">';
+        html += '<div class="sc"><div class="v" style="font-size:16px;color:var(--gold)">' + s.avgCallIV + '%</div><div class="l">Avg Call IV</div></div>';
+        html += '<div class="sc"><div class="v" style="font-size:16px;color:var(--accent)">' + s.avgPutIV + '%</div><div class="l">Avg Put IV</div></div>';
+        html += '<div class="sc"><div class="v" style="font-size:16px">' + s.putCallRatio + '</div><div class="l">P/C Ratio</div></div>';
+        html += '<div class="sc"><div class="v" style="font-size:16px;color:' + (s.skew > 0 ? 'var(--accent)' : 'var(--green)') + '">' + s.skew + '%</div><div class="l">Skew</div></div>';
+        html += '</div>';
+      }
+
+      // Expiration
+      html += '<div class="note" style="margin-bottom:8px">Expiry: ' + data.expiration + ' · Spot: $' + spot.toFixed(2) + '</div>';
+
+      // OTM Calls table (most relevant for the signal)
+      var otmCalls = data.calls.filter(function(c) { return !c.inTheMoney && c.strike <= spot * 1.3; }).slice(0, 8);
+      if (otmCalls.length > 0) {
+        html += '<div class="sec-label" style="margin-top:4px">OTM Calls<span class="src" style="margin-left:auto">LIVE</span></div>';
+        html += '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--muted);display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:2px;padding:2px 0;border-bottom:1px solid var(--border)">';
+        html += '<span>Strike</span><span>Bid</span><span>Ask</span><span>Vol</span><span>IV</span></div>';
+        otmCalls.forEach(function(c) {
+          var ivColor = c.impliedVolatility > 0.5 ? 'var(--accent)' : c.impliedVolatility > 0.35 ? 'var(--gold)' : 'var(--green)';
+          html += '<div style="font-family:IBM Plex Mono,monospace;font-size:10px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:2px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03)">';
+          html += '<span style="color:var(--white);font-weight:600">$' + c.strike.toFixed(0) + '</span>';
+          html += '<span>$' + c.bid.toFixed(2) + '</span>';
+          html += '<span>$' + c.ask.toFixed(2) + '</span>';
+          html += '<span>' + c.volume + '</span>';
+          html += '<span style="color:' + ivColor + '">' + (c.impliedVolatility * 100).toFixed(1) + '%</span>';
+          html += '</div>';
+        });
+      }
+
+      // OTM Puts (smaller)
+      var otmPuts = data.puts.filter(function(p) { return !p.inTheMoney && p.strike >= spot * 0.8; }).slice(-6);
+      if (otmPuts.length > 0) {
+        html += '<div class="sec-label" style="margin-top:10px">OTM Puts</div>';
+        html += '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--muted);display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:2px;padding:2px 0;border-bottom:1px solid var(--border)">';
+        html += '<span>Strike</span><span>Bid</span><span>Ask</span><span>Vol</span><span>IV</span></div>';
+        otmPuts.forEach(function(p) {
+          html += '<div style="font-family:IBM Plex Mono,monospace;font-size:10px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:2px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03)">';
+          html += '<span style="color:var(--white);font-weight:600">$' + p.strike.toFixed(0) + '</span>';
+          html += '<span>$' + p.bid.toFixed(2) + '</span>';
+          html += '<span>$' + p.ask.toFixed(2) + '</span>';
+          html += '<span>' + p.volume + '</span>';
+          html += '<span style="color:var(--accent)">' + (p.impliedVolatility * 100).toFixed(1) + '%</span>';
+          html += '</div>';
+        });
+      }
+
+      container.innerHTML = html;
+    } catch (e) {
+      container.innerHTML = '<div class="note">Options data: ' + e.message + '</div>';
+    }
+  }
+
   // ═══════ LIVE SCENARIO PRICING (based on live Brent price) ═══════
   function updateScenariosFromLivePrice(brentPrice) {
     if (!brentPrice || brentPrice <= 0) return;
@@ -936,8 +1089,16 @@
     setTimeout(loadFuturesCurve, 2000);
     setInterval(loadFuturesCurve, 60000);
 
+    // Live data: Options chain
+    setTimeout(loadOptions, 2500);
+    setInterval(loadOptions, 2 * 60000);
+
+    // Live data: Swarm (real Claude API calls — expensive, run every 30 min)
+    setTimeout(loadSwarm, 3000);
+    setInterval(loadSwarm, 30 * 60000);
+
     // Live data: NASA FIRMS fires (overwrites simulated)
-    setTimeout(loadFIRMSFires, 2500);
+    setTimeout(loadFIRMSFires, 3500);
     setInterval(loadFIRMSFires, 15 * 60000);
   }
 
