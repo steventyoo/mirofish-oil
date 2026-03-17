@@ -107,14 +107,21 @@ Analyze this state from your role as ${agent.name} (${agent.role}). Return your 
 }
 
 async function buildWorldState() {
-  // Fetch live data from our own API endpoints
-  const [pricesRes, polyRes] = await Promise.allSettled([
-    fetch(`https://${process.env.VERCEL_URL || 'mirofish-oil.vercel.app'}/api/prices`).then(r => r.json()),
-    fetch(`https://${process.env.VERCEL_URL || 'mirofish-oil.vercel.app'}/api/polymarket`).then(r => r.json()),
+  const baseUrl = `https://${process.env.VERCEL_URL || 'mirofish-oil.vercel.app'}`;
+  // Fetch live data from our own API endpoints — all in parallel
+  const [pricesRes, polyRes, optionsRes, cftcRes, eiaRes] = await Promise.allSettled([
+    fetch(`${baseUrl}/api/prices`).then(r => r.json()),
+    fetch(`${baseUrl}/api/polymarket`).then(r => r.json()),
+    fetch(`${baseUrl}/api/options`).then(r => r.json()),
+    fetch(`${baseUrl}/api/cftc`).then(r => r.json()),
+    fetch(`${baseUrl}/api/eia`).then(r => r.json()),
   ]);
 
   const prices = pricesRes.status === 'fulfilled' ? pricesRes.value : {};
   const polymarket = polyRes.status === 'fulfilled' ? polyRes.value : {};
+  const options = optionsRes.status === 'fulfilled' ? optionsRes.value : {};
+  const cftc = cftcRes.status === 'fulfilled' ? cftcRes.value : {};
+  const eia = eiaRes.status === 'fulfilled' ? eiaRes.value : {};
 
   const wti = prices['CL=F'] || { price: 0, change: 0, changePct: 0 };
   const brent = prices['BZ=F'] || { price: 0, change: 0, changePct: 0 };
@@ -173,16 +180,47 @@ async function buildWorldState() {
       shipping_incidents_7d: 4,
       region: 'Active conflict — US/Israel strikes on Iran, Iranian retaliation across Middle East',
     },
-    positioning: {
-      managed_money_percentile: 78,
-      short_squeeze_risk: 0.32,
+    positioning: cftc.latest ? {
+      managed_money_net: cftc.latest.managed_money.net,
+      managed_money_long: cftc.latest.managed_money.long,
+      managed_money_short: cftc.latest.managed_money.short,
+      managed_money_percentile: cftc.latest.managed_money.percentile,
+      managed_money_net_change_1w: cftc.latest.managed_money.net_change_1w,
+      short_squeeze_risk: cftc.latest.short_squeeze_risk,
+      open_interest: cftc.latest.open_interest,
+      oi_change_1w: cftc.latest.oi_change_1w,
+      cot_date: cftc.latest.date,
+    } : {
+      managed_money_percentile: 'unknown',
+      short_squeeze_risk: 'unknown',
+      note: 'CFTC data unavailable',
     },
-    volatility: {
-      iv_rank_percentile: 38,
-      iv_vs_realized_spread: -0.22,
+    volatility: options.summary ? {
+      avg_call_iv: options.summary.avgCallIV,
+      avg_put_iv: options.summary.avgPutIV,
+      put_call_ratio: options.summary.putCallRatio,
+      skew_pct: options.summary.skew,
+      total_call_volume: options.summary.totalCallVolume,
+      total_put_volume: options.summary.totalPutVolume,
+      total_call_oi: options.summary.totalCallOI,
+      total_put_oi: options.summary.totalPutOI,
+      spot_price: options.spotPrice,
+      expiration: options.expiration,
+    } : {
+      note: 'Options data unavailable — assess vol qualitatively',
+    },
+    inventories: eia.crude_stocks ? {
+      crude_change_mbbl: eia.crude_stocks.change ? eia.crude_stocks.change.change : null,
+      gasoline_change_mbbl: eia.gasoline_stocks && eia.gasoline_stocks.change ? eia.gasoline_stocks.change.change : null,
+      distillate_change_mbbl: eia.distillate_stocks && eia.distillate_stocks.change ? eia.distillate_stocks.change.change : null,
+      crude_total_mbbl: eia.crude_stocks.latest ? eia.crude_stocks.latest.value : null,
+      eia_period: eia.crude_stocks.change ? eia.crude_stocks.change.period : null,
+    } : {
+      note: 'EIA data unavailable',
     },
     curve: {
       state: 'backwardation',
+      brent_wti_spread: brent.price - wti.price,
       note: 'Front-back spread tightening, physical tightness signals',
     },
   };
