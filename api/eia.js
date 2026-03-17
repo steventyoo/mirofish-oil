@@ -20,17 +20,17 @@ export default async function handler(req, res) {
     // Fetch multiple series in parallel
     const [crudeRes, gasolineRes, distillateRes, cushingRes, utilRes, productionRes] = await Promise.allSettled([
       // Crude oil ending stocks (weekly)
-      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPC0', process: 'SAE', duoarea: 'NUS-Z00' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
+      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPC0', process: 'SAE', duoarea: 'NUS' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
       // Gasoline ending stocks
-      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPM0', process: 'SAE', duoarea: 'NUS-Z00' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
+      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPM0', process: 'SAE', duoarea: 'NUS' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
       // Distillate ending stocks
-      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPD0', process: 'SAE', duoarea: 'NUS-Z00' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
+      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPD0', process: 'SAE', duoarea: 'NUS' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
       // Cushing OK crude stocks
-      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPC0', process: 'SAE', duoarea: 'SOP-Z00' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
+      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPC0', process: 'SAE', duoarea: 'NUS' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
       // Refinery utilization
-      fetch(eiaUrl('petroleum/pnp/wiup/data', { duoarea: 'NUS-Z00' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
+      fetch(eiaUrl('petroleum/pnp/wiup/data', { duoarea: 'NUS' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
       // US crude production
-      fetch(eiaUrl('petroleum/crd/crpdn/data', { duoarea: 'NUS-Z00' }, 'monthly', 6), { signal: AbortSignal.timeout(10000) }),
+      fetch(eiaUrl('petroleum/crd/crpdn/data', { duoarea: 'NUS' }, 'monthly', 6), { signal: AbortSignal.timeout(10000) }),
     ]);
 
     async function extractSeries(promiseResult, label) {
