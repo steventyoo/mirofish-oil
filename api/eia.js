@@ -8,20 +8,29 @@ export default async function handler(req, res) {
   const apiKey = process.env.EIA_API_KEY || 'DEMO_KEY';
 
   try {
+    // Helper to build EIA URLs with proper encoding
+    function eiaUrl(path, facets, freq, len) {
+      let url = `https://api.eia.gov/v2/${path}?api_key=${apiKey}&frequency=${freq}&data%5B0%5D=value&length=${len}&sort%5B0%5D%5Bcolumn%5D=period&sort%5B0%5D%5Bdirection%5D=desc`;
+      for (const [key, val] of Object.entries(facets)) {
+        url += `&facets%5B${key}%5D%5B%5D=${val}`;
+      }
+      return url;
+    }
+
     // Fetch multiple series in parallel
     const [crudeRes, gasolineRes, distillateRes, cushingRes, utilRes, productionRes] = await Promise.allSettled([
       // Crude oil ending stocks (weekly)
-      fetch(`https://api.eia.gov/v2/petroleum/stoc/wstk/data?api_key=${apiKey}&frequency=weekly&data[0]=value&facets[product][]=EPC0&facets[process][]=SAE&facets[duoarea][]=NUS-Z00&length=10&sort[0][column]=period&sort[0][direction]=desc`, { signal: AbortSignal.timeout(10000) }),
+      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPC0', process: 'SAE', duoarea: 'NUS-Z00' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
       // Gasoline ending stocks
-      fetch(`https://api.eia.gov/v2/petroleum/stoc/wstk/data?api_key=${apiKey}&frequency=weekly&data[0]=value&facets[product][]=EPM0&facets[process][]=SAE&facets[duoarea][]=NUS-Z00&length=10&sort[0][column]=period&sort[0][direction]=desc`, { signal: AbortSignal.timeout(10000) }),
+      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPM0', process: 'SAE', duoarea: 'NUS-Z00' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
       // Distillate ending stocks
-      fetch(`https://api.eia.gov/v2/petroleum/stoc/wstk/data?api_key=${apiKey}&frequency=weekly&data[0]=value&facets[product][]=EPD0&facets[process][]=SAE&facets[duoarea][]=NUS-Z00&length=10&sort[0][column]=period&sort[0][direction]=desc`, { signal: AbortSignal.timeout(10000) }),
+      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPD0', process: 'SAE', duoarea: 'NUS-Z00' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
       // Cushing OK crude stocks
-      fetch(`https://api.eia.gov/v2/petroleum/stoc/wstk/data?api_key=${apiKey}&frequency=weekly&data[0]=value&facets[product][]=EPC0&facets[process][]=SAE&facets[duoarea][]=SOP-Z00&length=10&sort[0][column]=period&sort[0][direction]=desc`, { signal: AbortSignal.timeout(10000) }),
+      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPC0', process: 'SAE', duoarea: 'SOP-Z00' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
       // Refinery utilization
-      fetch(`https://api.eia.gov/v2/petroleum/pnp/wiup/data?api_key=${apiKey}&frequency=weekly&data[0]=value&facets[duoarea][]=NUS-Z00&length=10&sort[0][column]=period&sort[0][direction]=desc`, { signal: AbortSignal.timeout(10000) }),
+      fetch(eiaUrl('petroleum/pnp/wiup/data', { duoarea: 'NUS-Z00' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
       // US crude production
-      fetch(`https://api.eia.gov/v2/petroleum/crd/crpdn/data?api_key=${apiKey}&frequency=monthly&data[0]=value&facets[duoarea][]=NUS-Z00&length=6&sort[0][column]=period&sort[0][direction]=desc`, { signal: AbortSignal.timeout(10000) }),
+      fetch(eiaUrl('petroleum/crd/crpdn/data', { duoarea: 'NUS-Z00' }, 'monthly', 6), { signal: AbortSignal.timeout(10000) }),
     ]);
 
     async function extractSeries(promiseResult) {
