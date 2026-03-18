@@ -51,25 +51,51 @@ html, body {
 }
 .main-title {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 34px; letter-spacing: 2px;
+  font-size: 28px; letter-spacing: 2px;
   color: var(--white); line-height: 1;
 }
 .main-title span { color: var(--accent); }
 .main-title .gold { color: var(--gold); }
 .subtitle {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px; color: var(--muted);
+  font-size: 9px; color: var(--muted);
   letter-spacing: .8px; margin-top: 2px;
   text-transform: uppercase;
 }
+
+/* ── HEADER TABS ── */
+.header-tabs {
+  display: flex; gap: 0; align-items: stretch;
+  height: 100%;
+}
+.header-tab {
+  display: flex; align-items: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px; letter-spacing: 2px;
+  color: var(--muted); text-decoration: none;
+  padding: 0 22px; position: relative;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+}
+.header-tab:hover {
+  color: var(--white);
+  background: rgba(255,255,255,.03);
+}
+.header-tab.active {
+  color: var(--white);
+  border-bottom-color: var(--accent);
+  background: rgba(230,57,70,.06);
+}
+
+.header-right { text-align: right; flex-shrink: 0; }
 .datestamp {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 22px; color: var(--gold);
-  letter-spacing: 2px;
+  font-size: 20px; color: var(--gold);
+  letter-spacing: 2px; line-height: 1.1;
 }
 .source-line {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px; color: var(--muted);
+  font-size: 8px; color: var(--muted); margin-top: 2px;
 }
 
 /* ── TICKER ── */

@@ -40,16 +40,16 @@ html, body {
 .subtitle {
   font-size: 10px; color: var(--muted); letter-spacing: 0.5px; margin-top: 2px;
 }
-.nav-links { display: flex; gap: 16px; align-items: center; }
-.nav-links a {
-  color: var(--muted); text-decoration: none; font-size: 12px;
-  font-family: 'IBM Plex Mono', monospace; letter-spacing: 1px;
-  padding: 6px 12px; border: 1px solid var(--border); border-radius: 3px;
-  transition: all 0.2s;
+.nav-tabs { display: flex; gap: 0; align-items: stretch; height: 100%; }
+.nav-tab {
+  display: flex; align-items: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px;
+  color: var(--muted); text-decoration: none;
+  padding: 0 22px; position: relative;
+  border-bottom: 3px solid transparent; transition: all 0.2s;
 }
-.nav-links a:hover, .nav-links a.active {
-  color: var(--white); border-color: var(--accent); background: rgba(230,57,70,0.1);
-}
+.nav-tab:hover { color: var(--white); background: rgba(255,255,255,.03); }
+.nav-tab.active { color: var(--white); border-bottom-color: var(--accent); background: rgba(230,57,70,.06); }
 
 .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
 
@@ -163,16 +163,21 @@ html, body {
 <body>
 
 <div class="header">
-  <div style="display:flex;align-items:center">
+  <div style="display:flex;align-items:center;flex-shrink:0">
     <span class="breaking-badge">LIVE</span>
     <div>
-      <div class="main-title">TAGS <span>OIL</span> MONITOR — <span class="gold">TRACK RECORD</span></div>
-      <div class="subtitle">Signal history · accuracy tracking · swarm performance grading</div>
+      <div class="main-title">TAGS <span>OIL</span> MONITOR</div>
+      <div class="subtitle">MiroFish x Polymarket x CFTC</div>
     </div>
   </div>
-  <div class="nav-links">
-    <a href="/">Dashboard</a>
-    <a href="/track-record.html" class="active">Track Record</a>
+  <div class="nav-tabs">
+    <a href="/" class="nav-tab">Dashboard</a>
+    <a href="/track-record.html" class="nav-tab active">Track Record</a>
+    <a href="/supply-demand.html" class="nav-tab">Supply & Demand</a>
+  </div>
+  <div style="text-align:right;flex-shrink:0">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold);letter-spacing:2px" id="live-utc-tr"></div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted)">EIA · CFTC · OPEC · Yahoo Finance · MiroFish Swarm</div>
   </div>
 </div>
 
