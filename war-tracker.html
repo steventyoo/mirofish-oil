@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLACK ALPHA — War Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0b0f; --panel: #0d0f18; --border: #1b2133;
+  --accent: #e63946; --gold: #f4a261; --teal: #2a9d8f;
+  --blue: #457b9d; --purple: #6c5ce7; --text: #c8cdd8;
+  --muted: #5a6278; --white: #eef0f7; --green: #52b788;
+  --orange: #ff6b35;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex Sans', sans-serif; color: var(--text); }
+::-webkit-scrollbar { width: 2px; }
+::-webkit-scrollbar-thumb { background: var(--border); }
+
+.header { height: 68px; background: #080a12; border-bottom: 2px solid var(--accent); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+.breaking-badge { background: var(--accent); color: #fff; font-weight: 700; padding: 2px 10px; border-radius: 2px; margin-right: 14px; font-size: 11px; letter-spacing: 2px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.main-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: var(--white); line-height: 1; }
+.main-title span { color: var(--accent); }
+.subtitle { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: .8px; margin-top: 2px; text-transform: uppercase; }
+.nav-tabs { display: flex; gap: 0; align-items: stretch; height: 100%; }
+.nav-tab { display: flex; align-items: center; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--muted); text-decoration: none; padding: 0 16px; border-bottom: 3px solid transparent; transition: all 0.2s; }
+.nav-tab:hover { color: var(--white); background: rgba(255,255,255,.03); }
+.nav-tab.active { color: var(--white); border-bottom-color: var(--accent); background: rgba(230,57,70,.06); }
+
+.container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+@media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } .grid-5 { grid-template-columns: repeat(3, 1fr); } }
+
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 16px; }
+.card-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+.card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.card-title .live { width: 5px; height: 5px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+
+.stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 12px; text-align: center; }
+.stat-card .sv { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; }
+.stat-card .sl { font-family: 'IBM Plex Mono', monospace; font-size: 7px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; }
+.stat-card .sc { font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 600; margin-top: 2px; }
+
+.section-header { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--white); margin: 28px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.section-header:first-child { margin-top: 0; }
+.section-header .sh-icon { font-size: 22px; }
+.section-header .sh-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-left: auto; }
+
+.intel-table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 10px; }
+.intel-table th { text-align: left; color: var(--muted); font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 5px 6px; border-bottom: 1px solid var(--border); }
+.intel-table td { padding: 6px 6px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.intel-table tr:hover td { background: rgba(255,255,255,.02); }
+.intel-table .val { text-align: right; }
+
+.callout { padding: 10px 12px; border-radius: 3px; margin-top: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; line-height: 1.5; }
+.callout-red { background: rgba(230,57,70,.08); border: 1px solid rgba(230,57,70,.2); }
+.callout-gold { background: rgba(244,162,97,.06); border: 1px solid rgba(244,162,97,.2); }
+.callout strong { color: var(--white); }
+.note { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); }
+
+.bar-row { margin-bottom: 6px; }
+.bar-top { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 10px; margin-bottom: 2px; }
+.bar-bg { height: 5px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+.bar-fg { height: 5px; border-radius: 2px; transition: width 0.3s; }
+
+.badge { font-family: 'IBM Plex Mono', monospace; font-size: 8px; font-weight: 700; letter-spacing: .8px; padding: 2px 6px; border-radius: 2px; text-transform: uppercase; display: inline-block; }
+.b-crit { background: rgba(230,57,70,.25); color: var(--accent); }
+.b-high { background: rgba(255,107,53,.2); color: var(--orange); }
+.b-med { background: rgba(244,162,97,.2); color: var(--gold); }
+.b-low { background: rgba(42,157,143,.2); color: var(--teal); }
+
+.alert { padding: 8px 12px; border-left: 3px solid var(--accent); background: rgba(230,57,70,.06); margin-bottom: 6px; border-radius: 0 4px 4px 0; }
+.alert.gold { border-color: var(--gold); background: rgba(244,162,97,.06); }
+.alert.teal { border-color: var(--teal); background: rgba(42,157,143,.06); }
+.alert.orange { border-color: var(--orange); background: rgba(255,107,53,.06); }
+.alert .at { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); margin-bottom: 2px; }
+.alert .ab { font-size: 11px; color: var(--text); line-height: 1.4; }
+.alert .ab strong { color: var(--white); }
+
+.sg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sg-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.sc-box { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 3px; padding: 8px 10px; }
+.sc-box .v { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--white); line-height: 1; }
+.sc-box .l { font-family: 'IBM Plex Mono', monospace; font-size: 7px; color: var(--muted); margin-top: 2px; text-transform: uppercase; }
+
+/* Escalation ladder */
+.esc-ladder { display: flex; gap: 0; margin: 10px 0; }
+.esc-step { flex: 1; padding: 6px 4px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 8px; border: 1px solid rgba(255,255,255,.06); position: relative; }
+.esc-step .esc-num { font-family: 'Bebas Neue', sans-serif; font-size: 18px; line-height: 1; }
+.esc-step .esc-label { font-size: 6px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+.esc-active { border-color: var(--accent) !important; }
+.esc-active::after { content: '▼'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); color: var(--accent); font-size: 10px; }
+
+/* Theater row */
+.theater-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.theater-row:hover { background: rgba(255,255,255,.02); }
+.theater-name { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--white); font-weight: 600; min-width: 140px; }
+.theater-level { flex: 1; }
+.theater-impact { font-family: 'IBM Plex Mono', monospace; font-size: 10px; min-width: 100px; text-align: right; }
+
+/* Strike chart bars */
+.strike-bar { display: flex; align-items: flex-end; gap: 3px; height: 180px; padding: 0 4px; }
+.strike-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0; }
+.strike-col .bar-stack { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+.strike-col .bs { width: 100%; }
+.strike-col .bar-label { font-family: 'IBM Plex Mono', monospace; font-size: 7px; color: var(--muted); margin-top: 3px; text-align: center; }
+.strike-col .bar-count { font-family: 'Bebas Neue', sans-serif; font-size: 12px; color: var(--white); text-align: center; margin-bottom: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;flex-shrink:0">
+    <span class="breaking-badge">LIVE</span>
+    <div>
+      <div class="main-title">BLACK <span>ALPHA</span></div>
+      <div class="subtitle">Global Oil Monitor</div>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <a href="/" class="nav-tab">Dashboard</a>
+    <a href="/track-record.html" class="nav-tab">Track Record</a>
+    <a href="/supply-demand.html" class="nav-tab">Supply & Demand</a>
+    <a href="/hormuz-intel.html" class="nav-tab">Hormuz Intel</a>
+    <a href="/pricing.html" class="nav-tab">Pricing</a>
+    <a href="/war-tracker.html" class="nav-tab active">War Tracker</a>
+  </div>
+  <div style="text-align:right;flex-shrink:0">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold);letter-spacing:2px" id="live-utc"></div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted)">OSINT · CENTCOM · ADS-B · Polymarket · IAEA</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ═══════ GLOBAL CONFLICT DASHBOARD ═══════ -->
+<div class="section-header"><span class="sh-icon">⚔️</span> Global Conflict Dashboard <span class="sh-sub">MULTI-THEATER · LIVE</span></div>
+
+<div class="grid-5">
+  <div class="stat-card"><div class="sv" style="color:var(--accent)">DAY 19</div><div class="sl">Operation Epic Fury</div><div class="sc" style="color:var(--muted)">Feb 28 - Present</div></div>
+  <div class="stat-card"><div class="sv" style="color:var(--orange)">1,919</div><div class="sl">Total Projectiles</div><div class="sc" style="color:var(--muted)">298 ballistic · 1,606 drones · 15 cruise</div></div>
+  <div class="stat-card"><div class="sv" style="color:var(--accent)">6</div><div class="sl">Fatalities</div><div class="sc" style="color:var(--muted)">142 injured · 0 new deaths 5d</div></div>
+  <div class="stat-card"><div class="sv" style="color:var(--gold)">97%</div><div class="sl">Volume Decline</div><div class="sc" style="color:var(--muted)">Day 16: 10 vs Day 2: 360</div></div>
+  <div class="stat-card"><div class="sv" style="color:var(--green)">5</div><div class="sl">Active Theaters</div><div class="sc" style="color:var(--muted)">Iran · Red Sea · Taiwan · Ukraine · Libya</div></div>
+</div>
+
+<!-- ═══════ OPERATION EPIC FURY — STRIKE TIMELINE ═══════ -->
+<div class="section-header"><span class="sh-icon">🚀</span> Operation Epic Fury — Daily Strike Volume <span class="sh-sub">NOLIMITGAINS · OSINT</span></div>
+
+<div class="card" style="margin-bottom:20px">
+  <div class="card-title">Projectile Volume by Day — Feb 28 to Mar 18</div>
+  <div class="strike-bar" id="strike-chart"></div>
+  <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:9px">
+    <span><span style="display:inline-block;width:8px;height:8px;background:var(--accent);border-radius:1px;vertical-align:middle;margin-right:3px"></span> Ballistic Missiles</span>
+    <span><span style="display:inline-block;width:8px;height:8px;background:var(--orange);border-radius:1px;vertical-align:middle;margin-right:3px"></span> Drones/UAVs</span>
+    <span><span style="display:inline-block;width:8px;height:8px;background:var(--purple);border-radius:1px;vertical-align:middle;margin-right:3px"></span> Cruise Missiles</span>
+  </div>
+  <div class="callout callout-red" style="margin-top:10px">
+    <strong style="color:var(--accent)">Key pattern:</strong> Volume collapsed 97% from peak (Day 2: 360) to Day 16: 10. Days 1-9 averaged ~158/day. Days 10-16 averaged ~30/day. This suggests either target exhaustion, ammo depletion, or operational pause before next phase. Watch for volume spike = escalation resuming.
+  </div>
+</div>
+
+<!-- ═══════ MULTI-THEATER STATUS ═══════ -->
+<div class="section-header"><span class="sh-icon">🌍</span> Multi-Theater Conflict Status <span class="sh-sub">ALL THEATERS AFFECTING OIL</span></div>
+
+<div class="card" style="margin-bottom:20px">
+  <div class="theater-row">
+    <div class="theater-name">🇮🇷 Iran / Hormuz</div>
+    <div class="theater-level">
+      <div class="esc-ladder">
+        <div class="esc-step" style="background:rgba(82,183,136,.1)"><div class="esc-num" style="color:var(--green)">1</div><div class="esc-label">Calm</div></div>
+        <div class="esc-step" style="background:rgba(82,183,136,.1)"><div class="esc-num" style="color:var(--green)">2</div><div class="esc-label">Tensions</div></div>
+        <div class="esc-step" style="background:rgba(244,162,97,.1)"><div class="esc-num" style="color:var(--gold)">3</div><div class="esc-label">Posturing</div></div>
+        <div class="esc-step" style="background:rgba(244,162,97,.1)"><div class="esc-num" style="color:var(--gold)">4</div><div class="esc-label">Proxy</div></div>
+        <div class="esc-step" style="background:rgba(255,107,53,.1)"><div class="esc-num" style="color:var(--orange)">5</div><div class="esc-label">Strikes</div></div>
+        <div class="esc-step" style="background:rgba(255,107,53,.1)"><div class="esc-num" style="color:var(--orange)">6</div><div class="esc-label">Campaign</div></div>
+        <div class="esc-step esc-active" style="background:rgba(230,57,70,.15)"><div class="esc-num" style="color:var(--accent)">7</div><div class="esc-label">Active War</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">8</div><div class="esc-label">Blockade</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">9</div><div class="esc-label">Full War</div></div>
+        <div class="esc-step" style="background:rgba(108,92,231,.1)"><div class="esc-num" style="color:var(--purple)">10</div><div class="esc-label">Nuclear</div></div>
+      </div>
+    </div>
+    <div class="theater-impact"><span class="badge b-crit">CRITICAL</span><br><span style="font-size:8px;color:var(--accent)">20M b/d at risk</span></div>
+  </div>
+
+  <div class="theater-row">
+    <div class="theater-name">🇾🇪 Red Sea / Houthi</div>
+    <div class="theater-level">
+      <div class="esc-ladder">
+        <div class="esc-step" style="background:rgba(82,183,136,.1)"><div class="esc-num" style="color:var(--green)">1</div></div>
+        <div class="esc-step" style="background:rgba(82,183,136,.1)"><div class="esc-num" style="color:var(--green)">2</div></div>
+        <div class="esc-step" style="background:rgba(244,162,97,.1)"><div class="esc-num" style="color:var(--gold)">3</div></div>
+        <div class="esc-step" style="background:rgba(244,162,97,.1)"><div class="esc-num" style="color:var(--gold)">4</div></div>
+        <div class="esc-step esc-active" style="background:rgba(255,107,53,.15)"><div class="esc-num" style="color:var(--orange)">5</div></div>
+        <div class="esc-step" style="background:rgba(255,107,53,.1)"><div class="esc-num" style="color:var(--orange)">6</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">7</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">8</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">9</div></div>
+        <div class="esc-step" style="background:rgba(108,92,231,.1)"><div class="esc-num" style="color:var(--purple)">10</div></div>
+      </div>
+    </div>
+    <div class="theater-impact"><span class="badge b-high">HIGH</span><br><span style="font-size:8px;color:var(--orange)">Suez disrupted -15%</span></div>
+  </div>
+
+  <div class="theater-row">
+    <div class="theater-name">🇹🇼 Taiwan Strait</div>
+    <div class="theater-level">
+      <div class="esc-ladder">
+        <div class="esc-step" style="background:rgba(82,183,136,.1)"><div class="esc-num" style="color:var(--green)">1</div></div>
+        <div class="esc-step" style="background:rgba(82,183,136,.1)"><div class="esc-num" style="color:var(--green)">2</div></div>
+        <div class="esc-step esc-active" style="background:rgba(244,162,97,.15)"><div class="esc-num" style="color:var(--gold)">3</div></div>
+        <div class="esc-step" style="background:rgba(244,162,97,.1)"><div class="esc-num" style="color:var(--gold)">4</div></div>
+        <div class="esc-step" style="background:rgba(255,107,53,.1)"><div class="esc-num" style="color:var(--orange)">5</div></div>
+        <div class="esc-step" style="background:rgba(255,107,53,.1)"><div class="esc-num" style="color:var(--orange)">6</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">7</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">8</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">9</div></div>
+        <div class="esc-step" style="background:rgba(108,92,231,.1)"><div class="esc-num" style="color:var(--purple)">10</div></div>
+      </div>
+    </div>
+    <div class="theater-impact"><span class="badge b-med">ELEVATED</span><br><span style="font-size:8px;color:var(--gold)">26 PLA sorties (surge)</span></div>
+  </div>
+
+  <div class="theater-row">
+    <div class="theater-name">🇺🇦 Russia-Ukraine</div>
+    <div class="theater-level">
+      <div class="esc-ladder">
+        <div class="esc-step" style="background:rgba(82,183,136,.1)"><div class="esc-num" style="color:var(--green)">1</div></div>
+        <div class="esc-step" style="background:rgba(82,183,136,.1)"><div class="esc-num" style="color:var(--green)">2</div></div>
+        <div class="esc-step" style="background:rgba(244,162,97,.1)"><div class="esc-num" style="color:var(--gold)">3</div></div>
+        <div class="esc-step" style="background:rgba(244,162,97,.1)"><div class="esc-num" style="color:var(--gold)">4</div></div>
+        <div class="esc-step" style="background:rgba(255,107,53,.1)"><div class="esc-num" style="color:var(--orange)">5</div></div>
+        <div class="esc-step esc-active" style="background:rgba(255,107,53,.15)"><div class="esc-num" style="color:var(--orange)">6</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">7</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">8</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">9</div></div>
+        <div class="esc-step" style="background:rgba(108,92,231,.1)"><div class="esc-num" style="color:var(--purple)">10</div></div>
+      </div>
+    </div>
+    <div class="theater-impact"><span class="badge b-high">HIGH</span><br><span style="font-size:8px;color:var(--orange)">Sanctions / dark fleet</span></div>
+  </div>
+
+  <div class="theater-row">
+    <div class="theater-name">🇱🇾 Libya</div>
+    <div class="theater-level">
+      <div class="esc-ladder">
+        <div class="esc-step" style="background:rgba(82,183,136,.1)"><div class="esc-num" style="color:var(--green)">1</div></div>
+        <div class="esc-step esc-active" style="background:rgba(82,183,136,.15)"><div class="esc-num" style="color:var(--green)">2</div></div>
+        <div class="esc-step" style="background:rgba(244,162,97,.1)"><div class="esc-num" style="color:var(--gold)">3</div></div>
+        <div class="esc-step" style="background:rgba(244,162,97,.1)"><div class="esc-num" style="color:var(--gold)">4</div></div>
+        <div class="esc-step" style="background:rgba(255,107,53,.1)"><div class="esc-num" style="color:var(--orange)">5</div></div>
+        <div class="esc-step" style="background:rgba(255,107,53,.1)"><div class="esc-num" style="color:var(--orange)">6</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">7</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">8</div></div>
+        <div class="esc-step" style="background:rgba(230,57,70,.1)"><div class="esc-num" style="color:var(--accent)">9</div></div>
+        <div class="esc-step" style="background:rgba(108,92,231,.1)"><div class="esc-num" style="color:var(--purple)">10</div></div>
+      </div>
+    </div>
+    <div class="theater-impact"><span class="badge b-low">LOW</span><br><span style="font-size:8px;color:var(--teal)">1.2M b/d production</span></div>
+  </div>
+</div>
+
+<!-- ═══════ TAIWAN STRAIT MONITOR ═══════ -->
+<div class="section-header"><span class="sh-icon">🇹🇼</span> Taiwan Strait — PLA Activity Monitor <span class="sh-sub">SECOND FRONT RISK</span></div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">PLA Air Force Sorties — 30 Day Tracker</div>
+    <div class="alert" style="margin-bottom:8px"><div class="at">Mar 15 · CRITICAL SIGNAL</div><div class="ab"><strong>26 PLA aircraft detected in Taiwan Strait in 24 hours.</strong> First major surge since flights stopped Feb 27 (one day before Iran war started). Flights resumed after 2-week pause.</div></div>
+    <div class="alert gold" style="margin-bottom:8px"><div class="at">Feb 28 - Mar 12 · ANOMALY</div><div class="ab"><strong>Zero to 2 Chinese military flights around Taiwan for 14 consecutive days.</strong> First complete halt in years. Coincided exactly with start of Iran operations.</div></div>
+    <div class="callout callout-red">
+      <strong style="color:var(--accent)">Why this matters for oil:</strong> If China moves on Taiwan while the US is engaged with Iran, it's a two-front scenario. Taiwan Strait handles 40% of global container shipping. Combined Hormuz + Taiwan disruption = energy + supply chain crisis simultaneously. Defense stocks and oil would spike.
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Theories on PLA Pause</div>
+    <table class="intel-table">
+      <tr><th>Theory</th><th>Evidence</th><th class="val">Probability</th></tr>
+      <tr><td style="color:var(--white)">Pre-summit optics</td><td>Trump-Xi summit end of March</td><td class="val" style="color:var(--gold)">35%</td></tr>
+      <tr><td style="color:var(--white)">Anti-corruption purge</td><td>PLA command disrupted</td><td class="val" style="color:var(--gold)">25%</td></tr>
+      <tr><td style="color:var(--white)">Avoid US provocation</td><td>US focused on Iran</td><td class="val" style="color:var(--teal)">20%</td></tr>
+      <tr><td style="color:var(--white)">Repositioning assets</td><td>China fed Iran sat intel</td><td class="val" style="color:var(--accent)">15%</td></tr>
+      <tr><td style="color:var(--white)">Operational preparation</td><td>Quiet before action</td><td class="val" style="color:var(--accent)">5%</td></tr>
+    </table>
+    <div class="note" style="margin-top:8px">Source: NoLimitGains OSINT analysis · Mar 15, 2026</div>
+  </div>
+</div>
+
+<!-- ═══════ MILITARY ASSET TRACKER ═══════ -->
+<div class="section-header"><span class="sh-icon">🛳</span> Military Asset Positions <span class="sh-sub">CARRIER GROUPS · OSINT</span></div>
+
+<div class="card" style="margin-bottom:20px">
+  <table class="intel-table">
+    <tr><th>Asset</th><th>Type</th><th>Location</th><th>Mission</th><th class="val">Status</th></tr>
+    <tr><td style="color:var(--white);font-weight:600">USS Eisenhower (CVN-69)</td><td>Carrier Strike Group</td><td style="color:var(--gold)">Arabian Sea</td><td>Operation Epic Fury</td><td class="val"><span class="badge b-crit">COMBAT OPS</span></td></tr>
+    <tr><td style="color:var(--white);font-weight:600">USS Lincoln (CVN-72)</td><td>Carrier Strike Group</td><td style="color:var(--gold)">Gulf of Oman</td><td>Hormuz Security</td><td class="val"><span class="badge b-crit">COMBAT OPS</span></td></tr>
+    <tr><td style="color:var(--white);font-weight:600">USS Ronald Reagan (CVN-76)</td><td>Carrier Strike Group</td><td style="color:var(--teal)">Western Pacific</td><td>Taiwan deterrence</td><td class="val"><span class="badge b-med">DEPLOYED</span></td></tr>
+    <tr><td style="color:var(--white);font-weight:600">USS Ohio (SSGN-726)</td><td>Guided Missile Sub</td><td style="color:var(--muted)">Classified</td><td>Tomahawk launch platform</td><td class="val"><span class="badge b-high">ACTIVE</span></td></tr>
+    <tr><td style="color:var(--white);font-weight:600">B-2 Spirit (509th BW)</td><td>Stealth Bomber</td><td style="color:var(--gold)">Diego Garcia</td><td>Deep strike capability</td><td class="val"><span class="badge b-high">FORWARD DEPLOYED</span></td></tr>
+    <tr><td style="color:var(--white);font-weight:600">RAF Fairford B-52s</td><td>Strategic Bomber</td><td style="color:var(--teal)">UK / In-transit</td><td>Standoff munitions</td><td class="val"><span class="badge b-med">ON CALL</span></td></tr>
+  </table>
+  <div class="callout callout-gold" style="margin-top:8px">
+    <strong style="color:var(--gold)">Force posture:</strong> Two carrier groups in Gulf region is maximum deployment for Iran theater. If a third carrier repositions from Pacific, it signals either imminent escalation or concerns about a second front (Taiwan).
+  </div>
+</div>
+
+<!-- ═══════ DEFENSE STOCK CORRELATION ═══════ -->
+<div class="section-header"><span class="sh-icon">📊</span> Defense & Energy Stock Correlation <span class="sh-sub">YAHOO FINANCE · LIVE</span></div>
+
+<div class="card" style="margin-bottom:20px">
+  <div class="card-title"><span class="live"></span> Defense Stocks as War Sentiment Indicator</div>
+  <div id="defense-stocks"><div class="note">Loading defense stocks...</div></div>
+  <div class="callout callout-gold" style="margin-top:8px">
+    <strong style="color:var(--gold)">Leading indicator:</strong> Defense stocks (RTX, LMT, NOC) often move before oil on conflict escalation. If defense stocks surge while oil is flat, the market is pricing in conflict expansion before it hits supply. If defense stocks fall while oil is elevated, the market thinks de-escalation is coming.
+  </div>
+</div>
+
+<!-- ═══════ NUCLEAR RISK MONITOR ═══════ -->
+<div class="section-header"><span class="sh-icon">☢️</span> Iran Nuclear Risk Monitor <span class="sh-sub">IAEA · OSINT</span></div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Enrichment Status</div>
+    <div class="sg">
+      <div class="sc-box"><div class="v" style="color:var(--accent);font-size:18px">60%</div><div class="l">Current Enrichment Level</div></div>
+      <div class="sc-box"><div class="v" style="color:var(--gold);font-size:18px">90%</div><div class="l">Weapons-Grade Threshold</div></div>
+      <div class="sc-box"><div class="v" style="color:var(--accent);font-size:18px">~2 weeks</div><div class="l">Breakout Timeline</div></div>
+      <div class="sc-box"><div class="v" style="color:var(--orange);font-size:18px">LIMITED</div><div class="l">IAEA Inspector Access</div></div>
+    </div>
+    <div class="bar-row" style="margin-top:10px">
+      <div class="bar-top"><span>Enrichment Level</span><span style="color:var(--accent)">60% / 90% weapons grade</span></div>
+      <div class="bar-bg" style="height:8px"><div class="bar-fg" style="background:linear-gradient(90deg,var(--gold),var(--accent));width:67%;height:8px"></div></div>
+    </div>
+    <div class="callout callout-red" style="margin-top:8px">
+      <strong style="color:var(--accent)">If Iran announces 90% enrichment or IAEA expulsion, oil goes $150+ immediately.</strong> This is the ultimate tail risk — nuclear threshold crossing turns a regional conflict into a global crisis.
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Key Facilities Under Threat</div>
+    <table class="intel-table">
+      <tr><th>Facility</th><th>Function</th><th class="val">Status</th></tr>
+      <tr><td style="color:var(--white)">Natanz</td><td>Centrifuge enrichment (main)</td><td class="val"><span class="badge b-high">TARGETED</span></td></tr>
+      <tr><td style="color:var(--white)">Fordow</td><td>Underground enrichment</td><td class="val"><span class="badge b-crit">HARDENED</span></td></tr>
+      <tr><td style="color:var(--white)">Isfahan</td><td>Conversion / R&D</td><td class="val"><span class="badge b-high">TARGETED</span></td></tr>
+      <tr><td style="color:var(--white)">Bushehr</td><td>Nuclear power plant</td><td class="val"><span class="badge b-med">CIVILIAN</span></td></tr>
+      <tr><td style="color:var(--white)">Arak</td><td>Heavy water reactor</td><td class="val"><span class="badge b-med">MODIFIED</span></td></tr>
+      <tr><td style="color:var(--white)">Parchin</td><td>Military / testing</td><td class="val"><span class="badge b-crit">RESTRICTED</span></td></tr>
+    </table>
+    <div class="note" style="margin-top:6px">Fordow is built 80m underground — requires specialized bunker-busting munitions (GBU-57 MOP). Only B-2 Spirit can deliver.</div>
+  </div>
+</div>
+
+<!-- ═══════ SANCTIONS TRACKER ═══════ -->
+<div class="section-header"><span class="sh-icon">🚫</span> Sanctions & Trade Impact <span class="sh-sub">TREASURY · COMMERCE</span></div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Active Sanctions Regimes Affecting Oil</div>
+    <table class="intel-table">
+      <tr><th>Target</th><th>Scope</th><th class="val">Supply Impact</th></tr>
+      <tr><td style="color:var(--white);font-weight:600">Iran</td><td>Full embargo (pre-war) + expanded</td><td class="val" style="color:var(--accent)">-1.5M b/d</td></tr>
+      <tr><td style="color:var(--white);font-weight:600">Russia</td><td>Price cap $60/bbl + shipping</td><td class="val" style="color:var(--gold)">-0.5M b/d</td></tr>
+      <tr><td style="color:var(--white);font-weight:600">Venezuela</td><td>Partial license (Chevron)</td><td class="val" style="color:var(--teal)">-0.3M b/d</td></tr>
+      <tr><td style="color:var(--white)">Myanmar</td><td>Financial / energy</td><td class="val" style="color:var(--muted)">Minimal</td></tr>
+    </table>
+    <div class="note" style="margin-top:8px">Total sanctioned supply: ~2.3M b/d offline · Dark fleet circumvention: estimated 1.0-1.5M b/d</div>
+  </div>
+  <div class="card">
+    <div class="card-title">New Sanctions (Last 30 Days)</div>
+    <div class="alert"><div class="at">Mar 10 · US Treasury</div><div class="ab"><strong>OFAC designates 12 additional Iranian tankers and 3 shipping companies</strong></div></div>
+    <div class="alert gold"><div class="at">Mar 5 · EU</div><div class="ab"><strong>EU expands Iran sanctions to cover dual-use technology and drone components</strong></div></div>
+    <div class="alert teal"><div class="at">Mar 1 · UK</div><div class="ab"><strong>UK sanctions Iranian ports authority and 5 IRGC-affiliated entities</strong></div></div>
+    <div class="callout callout-gold" style="margin-top:6px">
+      <strong style="color:var(--gold)">Watch for:</strong> Secondary sanctions on Chinese refiners importing Iranian oil. If enforced, removes 0.5-1.0M b/d of Iranian supply that currently flows to China via dark fleet.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ OSINT FEEDS ═══════ -->
+<div class="section-header"><span class="sh-icon">📡</span> OSINT Intelligence Feed <span class="sh-sub">LIVE</span></div>
+
+<div class="card" style="margin-bottom:20px">
+  <div class="card-title"><span class="live"></span> Key OSINT Sources</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;font-family:'IBM Plex Mono',monospace;font-size:10px">
+    <a href="https://twitter.com/NoLimitGains" target="_blank" style="color:var(--gold);text-decoration:none;padding:8px;background:rgba(244,162,97,.05);border:1px solid rgba(244,162,97,.15);border-radius:3px;text-align:center">@NoLimitGains<br><span style="font-size:8px;color:var(--muted)">Conflict Tracker</span></a>
+    <a href="https://twitter.com/IntelCrab" target="_blank" style="color:var(--gold);text-decoration:none;padding:8px;background:rgba(244,162,97,.05);border:1px solid rgba(244,162,97,.15);border-radius:3px;text-align:center">@IntelCrab<br><span style="font-size:8px;color:var(--muted)">OSINT Aggregator</span></a>
+    <a href="https://twitter.com/sentdefender" target="_blank" style="color:var(--gold);text-decoration:none;padding:8px;background:rgba(244,162,97,.05);border:1px solid rgba(244,162,97,.15);border-radius:3px;text-align:center">@sentdefender<br><span style="font-size:8px;color:var(--muted)">Conflict Intel</span></a>
+    <a href="https://twitter.com/TankerTrackers" target="_blank" style="color:var(--gold);text-decoration:none;padding:8px;background:rgba(244,162,97,.05);border:1px solid rgba(244,162,97,.15);border-radius:3px;text-align:center">@TankerTrackers<br><span style="font-size:8px;color:var(--muted)">Dark Fleet Intel</span></a>
+    <a href="https://twitter.com/AuroraIntel" target="_blank" style="color:var(--gold);text-decoration:none;padding:8px;background:rgba(244,162,97,.05);border:1px solid rgba(244,162,97,.15);border-radius:3px;text-align:center">@AuroraIntel<br><span style="font-size:8px;color:var(--muted)">Military Flights</span></a>
+    <a href="https://twitter.com/OAlexanderDK" target="_blank" style="color:var(--gold);text-decoration:none;padding:8px;background:rgba(244,162,97,.05);border:1px solid rgba(244,162,97,.15);border-radius:3px;text-align:center">@OAlexanderDK<br><span style="font-size:8px;color:var(--muted)">Ukraine War Maps</span></a>
+    <a href="https://liveuamap.com/" target="_blank" style="color:var(--gold);text-decoration:none;padding:8px;background:rgba(244,162,97,.05);border:1px solid rgba(244,162,97,.15);border-radius:3px;text-align:center">LiveUAMap<br><span style="font-size:8px;color:var(--muted)">Live Conflict Map</span></a>
+    <a href="https://globe.adsbexchange.com/?mil=true" target="_blank" style="color:var(--gold);text-decoration:none;padding:8px;background:rgba(244,162,97,.05);border:1px solid rgba(244,162,97,.15);border-radius:3px;text-align:center">ADS-B Exchange<br><span style="font-size:8px;color:var(--muted)">Military Flights</span></a>
+  </div>
+  <div id="centcom-feed"><div class="note">Loading CENTCOM feed...</div></div>
+</div>
+
+<div style="text-align:center;padding:30px 0;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">
+  BLACK ALPHA — War Tracker · Sources: CENTCOM, NoLimitGains, ADS-B Exchange, IAEA, OSINT
+</div>
+
+</div><!-- /container -->
+
+<script>
+(function() {
+  'use strict';
+
+  function fetchTimeout(url, ms) {
+    var c = new AbortController();
+    var t = setTimeout(function() { c.abort(); }, ms);
+    return fetch(url, { signal: c.signal }).finally(function() { clearTimeout(t); });
+  }
+
+  // ── UTC Clock ──
+  function updateUTC() {
+    var el = document.getElementById('live-utc');
+    if (!el) return;
+    var now = new Date();
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    el.textContent = months[now.getUTCMonth()] + ' ' + now.getUTCDate() + ', ' + now.getUTCFullYear() + ' · ' + String(now.getUTCHours()).padStart(2,'0') + ':' + String(now.getUTCMinutes()).padStart(2,'0') + ' UTC';
+  }
+
+  // ── Strike Chart (Operation Epic Fury) ──
+  function renderStrikeChart() {
+    var container = document.getElementById('strike-chart');
+    if (!container) return;
+
+    var days = [
+      { day: 1, date: 'Feb 28', ballistic: 120, drone: 220, cruise: 6, total: 346 },
+      { day: 2, date: 'Mar 1', ballistic: 100, drone: 255, cruise: 5, total: 360 },
+      { day: 3, date: 'Mar 2', ballistic: 30, drone: 125, cruise: 2, total: 157 },
+      { day: 4, date: 'Mar 3', ballistic: 25, drone: 115, cruise: 3, total: 143 },
+      { day: 5, date: 'Mar 4', ballistic: 18, drone: 112, cruise: 2, total: 132 },
+      { day: 6, date: 'Mar 5', ballistic: 15, drone: 121, cruise: 2, total: 138 },
+      { day: 7, date: 'Mar 6', ballistic: 10, drone: 109, cruise: 2, total: 121 },
+      { day: 8, date: 'Mar 7', ballistic: 12, drone: 123, cruise: 2, total: 137 },
+      { day: 9, date: 'Mar 8', ballistic: 8, drone: 125, cruise: 1, total: 134 },
+      { day: 10, date: 'Mar 9', ballistic: 5, drone: 27, cruise: 1, total: 33 },
+      { day: 11, date: 'Mar 10', ballistic: 6, drone: 37, cruise: 1, total: 44 },
+      { day: 12, date: 'Mar 11', ballistic: 8, drone: 43, cruise: 1, total: 52 },
+      { day: 13, date: 'Mar 12', ballistic: 4, drone: 31, cruise: 1, total: 36 },
+      { day: 14, date: 'Mar 13', ballistic: 3, drone: 30, cruise: 1, total: 34 },
+      { day: 15, date: 'Mar 14', ballistic: 5, drone: 36, cruise: 1, total: 42 },
+      { day: 16, date: 'Mar 15', ballistic: 1, drone: 9, cruise: 0, total: 10 },
+      { day: 17, date: 'Mar 16', ballistic: 2, drone: 15, cruise: 0, total: 17 },
+      { day: 18, date: 'Mar 17', ballistic: 3, drone: 20, cruise: 0, total: 23 },
+      { day: 19, date: 'Mar 18', ballistic: 2, drone: 12, cruise: 0, total: 14 },
+    ];
+
+    var maxTotal = Math.max.apply(null, days.map(function(d) { return d.total; }));
+
+    var html = '';
+    days.forEach(function(d) {
+      var bH = Math.round((d.ballistic / maxTotal) * 160);
+      var dH = Math.round((d.drone / maxTotal) * 160);
+      var cH = Math.round((d.cruise / maxTotal) * 160);
+      html += '<div class="strike-col">'
+        + '<div class="bar-count">' + d.total + '</div>'
+        + '<div class="bar-stack">'
+        + (cH > 0 ? '<div class="bs" style="height:' + cH + 'px;background:var(--purple)"></div>' : '')
+        + '<div class="bs" style="height:' + dH + 'px;background:var(--orange)"></div>'
+        + '<div class="bs" style="height:' + bH + 'px;background:var(--accent)"></div>'
+        + '</div>'
+        + '<div class="bar-label">D' + d.day + '<br>' + d.date + '</div>'
+        + '</div>';
+    });
+    container.innerHTML = html;
+  }
+
+  // ── Defense Stocks ──
+  async function loadDefenseStocks() {
+    var container = document.getElementById('defense-stocks');
+    if (!container) return;
+    try {
+      var res = await fetchTimeout('/api/prices', 10000);
+      if (!res.ok) return;
+      var batch = await res.json();
+
+      var tickers = [
+        { sym: 'RTX', name: 'RTX (Raytheon)', color: 'var(--green)' },
+        { sym: 'LMT', name: 'Lockheed Martin', color: 'var(--green)' },
+        { sym: 'NOC', name: 'Northrop Grumman', color: 'var(--green)' },
+        { sym: 'GD', name: 'General Dynamics', color: 'var(--green)' },
+        { sym: 'BA', name: 'Boeing', color: 'var(--blue)' },
+        { sym: 'XOM', name: 'Exxon Mobil', color: 'var(--gold)' },
+        { sym: 'CVX', name: 'Chevron', color: 'var(--gold)' },
+        { sym: 'COP', name: 'ConocoPhillips', color: 'var(--gold)' },
+      ];
+
+      var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">';
+      tickers.forEach(function(t) {
+        var q = batch[t.sym];
+        if (!q) return;
+        var chgC = q.change >= 0 ? 'var(--green)' : 'var(--accent)';
+        html += '<div class="sc-box" style="text-align:center">'
+          + '<div class="v" style="font-size:18px;color:' + t.color + '">$' + q.price.toFixed(2) + '</div>'
+          + '<div class="l">' + t.name + '</div>'
+          + '<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:' + chgC + ';margin-top:2px">' + (q.change >= 0 ? '+' : '') + q.changePct.toFixed(2) + '%</div>'
+          + '</div>';
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    } catch (e) {
+      container.innerHTML = '<div class="note">Defense stocks require tickers added to /api/prices</div>';
+    }
+  }
+
+  // ── CENTCOM Feed ──
+  async function loadCentcom() {
+    var container = document.getElementById('centcom-feed');
+    if (!container) return;
+    try {
+      var res = await fetchTimeout('/api/centcom', 15000);
+      if (!res.ok) throw new Error('api failed');
+      var data = await res.json();
+      if (!data.items || data.items.length === 0) throw new Error('no items');
+      var html = '';
+      data.items.slice(0, 8).forEach(function(item) {
+        var cls = item.severity === 'critical' ? '' : item.severity === 'high' ? 'orange' : item.severity === 'medium' ? 'gold' : 'teal';
+        html += '<div class="alert ' + cls + '"><div class="at">' + (item.pubDate ? new Date(item.pubDate).toLocaleDateString() : '') + ' · <span class="badge b-' + (item.severity === 'critical' ? 'crit' : item.severity === 'high' ? 'high' : item.severity === 'medium' ? 'med' : 'low') + '">' + item.severity + '</span></div><div class="ab"><strong>' + item.title + '</strong></div></div>';
+      });
+      container.innerHTML = html;
+    } catch (e) {
+      container.innerHTML = '<div class="note">CENTCOM: ' + e.message + ' — <a href="https://www.centcom.mil/MEDIA/PRESS-RELEASES/" target="_blank" style="color:var(--gold)">View directly →</a></div>';
+    }
+  }
+
+  // ── Init ──
+  function init() {
+    updateUTC();
+    setInterval(updateUTC, 60000);
+    renderStrikeChart();
+    loadDefenseStocks();
+    setInterval(loadDefenseStocks, 5 * 60000);
+    setTimeout(loadCentcom, 1000);
+    setInterval(loadCentcom, 30 * 60000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
