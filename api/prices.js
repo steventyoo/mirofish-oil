@@ -1,7 +1,7 @@
 // Vercel serverless function: fetch live prices from Yahoo Finance
 // Returns all tickers in one batch call
 
-const TICKERS = ['CL=F', 'BZ=F', 'TTF=F', 'DX-Y.NYB', '^GSPC', '^VIX', '^TNX', 'GC=F'];
+const TICKERS = ['CL=F', 'BZ=F', 'TTF=F', 'DX-Y.NYB', '^GSPC', '^VIX', '^TNX', 'GC=F', 'RB=F', 'HO=F'];
 
 async function fetchQuote(symbol) {
   try {

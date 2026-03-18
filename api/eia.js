@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     }
 
     // Fetch multiple series in parallel
-    const [crudeRes, gasolineRes, distillateRes, cushingRes, utilRes, productionRes] = await Promise.allSettled([
+    const [crudeRes, gasolineRes, distillateRes, cushingRes, utilRes, productionRes, sprRes] = await Promise.allSettled([
       // Crude oil ending stocks (weekly)
       fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPC0', process: 'SAE', duoarea: 'NUS' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
       // Gasoline ending stocks
@@ -31,6 +31,8 @@ export default async function handler(req, res) {
       fetch(eiaUrl('petroleum/pnp/wiup/data', { duoarea: 'NUS' }, 'weekly', 10), { signal: AbortSignal.timeout(10000) }),
       // US crude production
       fetch(eiaUrl('petroleum/crd/crpdn/data', { duoarea: 'NUS' }, 'monthly', 6), { signal: AbortSignal.timeout(10000) }),
+      // Strategic Petroleum Reserve (SPR) stocks (weekly)
+      fetch(eiaUrl('petroleum/stoc/wstk/data', { product: 'EPC0', process: 'SAX', duoarea: 'NUS' }, 'weekly', 52), { signal: AbortSignal.timeout(10000) }),
     ]);
 
     async function extractSeries(promiseResult, label) {
@@ -54,6 +56,7 @@ export default async function handler(req, res) {
     const cushingResult = await extractSeries(cushingRes, 'cushing');
     const utilizationResult = await extractSeries(utilRes, 'utilization');
     const productionResult = await extractSeries(productionRes, 'production');
+    const sprResult = await extractSeries(sprRes, 'spr');
 
     const crude = crudeResult.data;
     const gasoline = gasolineResult.data;
@@ -61,8 +64,9 @@ export default async function handler(req, res) {
     const cushing = cushingResult.data;
     const utilization = utilizationResult.data;
     const production = productionResult.data;
+    const spr = sprResult.data;
 
-    const _debug = [crudeResult, gasolineResult, distillateResult, cushingResult, utilizationResult, productionResult].map(r => r.debug);
+    const _debug = [crudeResult, gasolineResult, distillateResult, cushingResult, utilizationResult, productionResult, sprResult].map(r => r.debug);
 
     // Compute week-over-week changes
     function weeklyChange(series) {
@@ -105,6 +109,12 @@ export default async function handler(req, res) {
       production: {
         latest: production[0] || null,
         history: production.slice(0, 6),
+      },
+      spr: {
+        latest: spr[0] || null,
+        change: weeklyChange(spr),
+        history: spr.slice(0, 52),
+        peak: spr.length > 0 ? Math.max(...spr.map(s => s.value)) : null,
       },
       _debug,
       _apiKey: apiKey ? apiKey.substring(0, 8) + '...' : 'none',

@@ -1174,6 +1174,339 @@
     if (brentPrice) updateScenariosFromLivePrice(brentPrice);
   }
 
+  // ═══════ SPR DATA (Strategic Petroleum Reserve) ═══════
+  async function loadSPR() {
+    var container = document.getElementById('spr-data');
+    if (!container) return;
+
+    try {
+      var res = await fetchTimeout('/api/eia', 12000);
+      if (!res.ok) return;
+      var data = await res.json();
+      if (!data.spr || !data.spr.latest) {
+        container.innerHTML = '<div class="note">SPR data unavailable</div>';
+        return;
+      }
+
+      var spr = data.spr;
+      var current = spr.latest.value / 1000; // convert to millions
+      var peak = spr.peak ? spr.peak / 1000 : 727; // historical peak ~727M bbl
+      var pctOfPeak = Math.round((current / peak) * 100);
+      var chg = spr.change ? spr.change.change / 1000 : 0;
+      var chgStr = (chg > 0 ? '+' : '') + chg.toFixed(1) + 'M bbl/wk';
+
+      // Mini sparkline from history
+      var hist = spr.history || [];
+      var sparkHtml = '';
+      if (hist.length > 4) {
+        var vals = hist.slice(0, 26).map(function(h) { return h.value / 1000; }).reverse();
+        var min = Math.min.apply(null, vals);
+        var max = Math.max.apply(null, vals);
+        var range = max - min || 1;
+        var points = vals.map(function(v, i) {
+          return (i * (260 / (vals.length - 1))) + ',' + (38 - ((v - min) / range) * 34);
+        }).join(' ');
+        sparkHtml = '<svg width="260" height="42" style="display:block;margin:6px 0">'
+          + '<polyline points="' + points + '" fill="none" stroke="var(--accent)" stroke-width="1.5" opacity="0.8"/>'
+          + '<text x="0" y="10" fill="var(--muted)" font-size="7" font-family="IBM Plex Mono,monospace">' + max.toFixed(0) + 'M</text>'
+          + '<text x="0" y="40" fill="var(--muted)" font-size="7" font-family="IBM Plex Mono,monospace">' + min.toFixed(0) + 'M</text>'
+          + '</svg>';
+      }
+
+      var fillColor = pctOfPeak < 50 ? 'var(--accent)' : pctOfPeak < 70 ? 'var(--gold)' : 'var(--green)';
+      var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">'
+        + '<div class="sc"><div class="v" style="font-size:20px;color:' + fillColor + '">' + current.toFixed(0) + 'M</div><div class="l">Current SPR (bbl)</div></div>'
+        + '<div class="sc"><div class="v" style="font-size:20px;color:var(--muted)">' + pctOfPeak + '%</div><div class="l">% of Peak (' + peak.toFixed(0) + 'M)</div></div>'
+        + '</div>';
+
+      // Fill bar
+      html += '<div class="bar-row"><div class="bar-top"><span>SPR Fill Level</span><span class="bar-val">' + chgStr + '</span></div>';
+      html += '<div class="bar-bg"><div class="bar-fg" style="background:' + fillColor + ';width:' + pctOfPeak + '%"></div></div></div>';
+
+      // Sparkline
+      html += sparkHtml;
+
+      // Warning callout if low
+      if (pctOfPeak < 55) {
+        html += '<div class="callout-box callout-red" style="margin-top:4px"><div style="font-size:9px;color:var(--text);line-height:1.4">'
+          + '<strong style="color:var(--accent)">SPR at multi-decade low.</strong> Limited buffer for supply disruption. Gov\'t ability to release reserves is constrained.'
+          + '</div></div>';
+      }
+
+      container.innerHTML = html;
+      // Update section label
+      var label = container.parentElement.querySelector('.sec-label');
+      if (label) label.innerHTML = '<span style="display:flex;align-items:center;gap:6px;flex:1"><span class="lp-dot"></span> SPR — Strategic Petroleum Reserve</span><span class="src" style="margin-left:auto">LIVE · EIA</span>';
+    } catch (e) {
+      container.innerHTML = '<div class="note">SPR: ' + e.message + '</div>';
+    }
+  }
+
+  // ═══════ CRACK SPREADS (Refinery Margins) ═══════
+  async function loadCrackSpreads() {
+    var container = document.getElementById('crack-spreads');
+    if (!container) return;
+
+    try {
+      var res = await fetchTimeout('/api/prices', 10000);
+      if (!res.ok) throw new Error('api failed');
+      var batch = await res.json();
+
+      var wti = batch['CL=F'];
+      var rb = batch['RB=F'];   // RBOB Gasoline
+      var ho = batch['HO=F'];   // Heating Oil (distillate proxy)
+
+      if (!wti || !rb || !ho) throw new Error('missing data');
+
+      // 3-2-1 crack spread: (2 * gasoline + 1 * heating oil) / 3 - crude
+      // RB and HO are in $/gallon, need to convert to $/barrel (42 gal/bbl)
+      var gasolinePerBbl = rb.price * 42;
+      var heatingPerBbl = ho.price * 42;
+      var crack321 = ((2 * gasolinePerBbl) + heatingPerBbl) / 3 - wti.price;
+
+      // Simple gasoline crack
+      var gasCrack = gasolinePerBbl - wti.price;
+
+      // Distillate crack
+      var distCrack = heatingPerBbl - wti.price;
+
+      var crackColor = crack321 > 25 ? 'var(--green)' : crack321 > 15 ? 'var(--gold)' : 'var(--accent)';
+
+      var html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">';
+      html += '<div class="sc"><div class="v" style="font-size:18px;color:' + crackColor + '">$' + crack321.toFixed(2) + '</div><div class="l">3-2-1 Crack</div></div>';
+      html += '<div class="sc"><div class="v" style="font-size:18px;color:var(--green)">$' + gasCrack.toFixed(2) + '</div><div class="l">Gasoline Crack</div></div>';
+      html += '<div class="sc"><div class="v" style="font-size:18px;color:var(--gold)">$' + distCrack.toFixed(2) + '</div><div class="l">Distillate Crack</div></div>';
+      html += '</div>';
+
+      // Raw product prices
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+      html += '<div class="sc"><div class="v" style="font-size:14px">$' + rb.price.toFixed(4) + '/gal</div><div class="l">RBOB Gasoline (RB=F)</div></div>';
+      html += '<div class="sc"><div class="v" style="font-size:14px">$' + ho.price.toFixed(4) + '/gal</div><div class="l">Heating Oil (HO=F)</div></div>';
+      html += '</div>';
+
+      // Interpretation
+      var interpretation = crack321 > 30
+        ? 'Refinery margins extremely strong — demand for products robust, supports crude prices.'
+        : crack321 > 20
+        ? 'Healthy refinery margins — product demand solid, refiners incentivized to process crude.'
+        : crack321 > 10
+        ? 'Moderate margins — refinery economics neutral.'
+        : 'Weak margins — demand soft, refiners may cut runs, bearish for crude demand.';
+
+      html += '<div class="callout-box callout-' + (crack321 > 20 ? 'gold' : 'red') + '" style="margin-top:6px"><div style="font-size:9px;color:var(--text);line-height:1.4">'
+        + '<strong style="color:' + crackColor + '">3-2-1 Crack: $' + crack321.toFixed(2) + '/bbl.</strong> ' + interpretation
+        + '</div></div>';
+
+      container.innerHTML = html;
+      var label = container.parentElement.querySelector('.sec-label');
+      if (label) label.innerHTML = '<span style="display:flex;align-items:center;gap:6px;flex:1"><span class="lp-dot"></span> Crack Spreads — Refinery Margins</span><span class="src" style="margin-left:auto">LIVE</span>';
+    } catch (e) {
+      container.innerHTML = '<div class="note">Crack spreads: ' + e.message + '</div>';
+    }
+  }
+
+  // ═══════ IV SKEW CHART (from options data) ═══════
+  async function loadIVSkew() {
+    var container = document.getElementById('iv-skew-chart');
+    if (!container) return;
+
+    try {
+      var res = await fetchTimeout('/api/options', 12000);
+      if (!res.ok) throw new Error('api failed');
+      var data = await res.json();
+      if (!data.calls || data.calls.length === 0) throw new Error('no options data');
+
+      var spot = data.spotPrice;
+
+      // Get OTM puts and OTM calls with valid IV
+      var puts = data.puts.filter(function(p) {
+        return !p.inTheMoney && p.impliedVolatility > 0 && p.strike >= spot * 0.75;
+      });
+      var calls = data.calls.filter(function(c) {
+        return !c.inTheMoney && c.impliedVolatility > 0 && c.strike <= spot * 1.35;
+      });
+
+      // Combine and sort by strike
+      var allStrikes = [];
+      puts.forEach(function(p) { allStrikes.push({ strike: p.strike, iv: p.impliedVolatility, type: 'put' }); });
+      calls.forEach(function(c) { allStrikes.push({ strike: c.strike, iv: c.impliedVolatility, type: 'call' }); });
+      allStrikes.sort(function(a, b) { return a.strike - b.strike; });
+
+      if (allStrikes.length < 3) throw new Error('insufficient data');
+
+      // Build SVG chart
+      var width = 280;
+      var height = 100;
+      var padding = 25;
+      var chartW = width - padding * 2;
+      var chartH = height - 20;
+
+      var minStrike = allStrikes[0].strike;
+      var maxStrike = allStrikes[allStrikes.length - 1].strike;
+      var strikeRange = maxStrike - minStrike || 1;
+      var ivs = allStrikes.map(function(s) { return s.iv; });
+      var minIV = Math.min.apply(null, ivs) * 0.9;
+      var maxIV = Math.max.apply(null, ivs) * 1.1;
+      var ivRange = maxIV - minIV || 0.01;
+
+      var putPoints = [];
+      var callPoints = [];
+      allStrikes.forEach(function(s) {
+        var x = padding + ((s.strike - minStrike) / strikeRange) * chartW;
+        var y = 10 + chartH - ((s.iv - minIV) / ivRange) * chartH;
+        if (s.type === 'put') putPoints.push(x + ',' + y);
+        else callPoints.push(x + ',' + y);
+      });
+
+      // Spot line x position
+      var spotX = padding + ((spot - minStrike) / strikeRange) * chartW;
+
+      var svg = '<svg width="' + width + '" height="' + (height + 15) + '" style="display:block;margin:4px auto">';
+      // Grid lines
+      svg += '<line x1="' + padding + '" y1="10" x2="' + padding + '" y2="' + (10 + chartH) + '" stroke="var(--border)" stroke-width="0.5"/>';
+      svg += '<line x1="' + padding + '" y1="' + (10 + chartH) + '" x2="' + (padding + chartW) + '" y2="' + (10 + chartH) + '" stroke="var(--border)" stroke-width="0.5"/>';
+      // Spot marker
+      svg += '<line x1="' + spotX + '" y1="5" x2="' + spotX + '" y2="' + (10 + chartH) + '" stroke="var(--gold)" stroke-width="1" stroke-dasharray="3,2" opacity="0.6"/>';
+      svg += '<text x="' + spotX + '" y="' + (height + 10) + '" fill="var(--gold)" font-size="7" font-family="IBM Plex Mono,monospace" text-anchor="middle">$' + spot.toFixed(0) + ' SPOT</text>';
+      // Put IV line
+      if (putPoints.length > 1) svg += '<polyline points="' + putPoints.join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="1.5" opacity="0.8"/>';
+      // Call IV line
+      if (callPoints.length > 1) svg += '<polyline points="' + callPoints.join(' ') + '" fill="none" stroke="var(--green)" stroke-width="1.5" opacity="0.8"/>';
+      // Labels
+      svg += '<text x="' + padding + '" y="8" fill="var(--muted)" font-size="7" font-family="IBM Plex Mono,monospace">' + (maxIV * 100).toFixed(0) + '%</text>';
+      svg += '<text x="' + padding + '" y="' + (10 + chartH + 4) + '" fill="var(--muted)" font-size="7" font-family="IBM Plex Mono,monospace">' + (minIV * 100).toFixed(0) + '%</text>';
+      // Legend
+      svg += '<rect x="' + (width - 85) + '" y="2" width="8" height="3" fill="var(--accent)"/>';
+      svg += '<text x="' + (width - 74) + '" y="6" fill="var(--accent)" font-size="7" font-family="IBM Plex Mono,monospace">Put IV</text>';
+      svg += '<rect x="' + (width - 85) + '" y="11" width="8" height="3" fill="var(--green)"/>';
+      svg += '<text x="' + (width - 74) + '" y="15" fill="var(--green)" font-size="7" font-family="IBM Plex Mono,monospace">Call IV</text>';
+      svg += '</svg>';
+
+      // Skew interpretation
+      var avgPutIV = puts.length > 0 ? puts.reduce(function(s, p) { return s + p.impliedVolatility; }, 0) / puts.length : 0;
+      var avgCallIV = calls.length > 0 ? calls.reduce(function(s, c) { return s + c.impliedVolatility; }, 0) / calls.length : 0;
+      var skewPct = avgPutIV > 0 ? ((avgPutIV - avgCallIV) / avgPutIV * 100).toFixed(1) : '0';
+      var skewDir = avgPutIV > avgCallIV ? 'Put skew (downside fear)' : 'Call skew (upside demand)';
+      var skewColor = avgPutIV > avgCallIV ? 'var(--accent)' : 'var(--green)';
+
+      var html = svg;
+      html += '<div style="display:flex;justify-content:space-between;font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--muted);margin-top:4px">';
+      html += '<span>Avg Put IV: <strong style="color:var(--accent)">' + (avgPutIV * 100).toFixed(1) + '%</strong></span>';
+      html += '<span>Avg Call IV: <strong style="color:var(--green)">' + (avgCallIV * 100).toFixed(1) + '%</strong></span>';
+      html += '<span style="color:' + skewColor + '">' + skewDir + '</span>';
+      html += '</div>';
+
+      container.innerHTML = html;
+      var label = container.parentElement.querySelector('.sec-label');
+      if (label) label.innerHTML = '<span style="display:flex;align-items:center;gap:6px;flex:1"><span class="lp-dot"></span> IV Skew — Volatility by Strike</span><span class="src" style="margin-left:auto">LIVE</span>';
+    } catch (e) {
+      container.innerHTML = '<div class="note">IV Skew: ' + e.message + '</div>';
+    }
+  }
+
+  // ═══════ HISTORICAL ANALOG OVERLAYS ═══════
+  function renderHistoricalAnalogs() {
+    var container = document.getElementById('historical-analogs');
+    if (!container) return;
+
+    // Historical price paths (normalized to 100 at t=0, showing % change over days)
+    var analogs = [
+      {
+        name: '1990 Kuwait Invasion',
+        color: 'var(--accent)',
+        // Oil went from ~$21 to ~$46 in 2 months, then back to $20 in 6 months
+        path: [0,5,12,22,35,48,62,75,88,95,105,110,108,100,92,80,65,50,35,20,10,5,0,-5],
+        duration: '6 months',
+        peak: '+130%',
+        note: 'Sharp spike on invasion, rapid reversal after coalition formed'
+      },
+      {
+        name: '2019 Abqaiq Attack',
+        color: 'var(--gold)',
+        // Oil spiked 15% overnight, gave back most in 2 weeks
+        path: [0,2,15,14,12,10,8,6,4,3,2,1,0,-1,-2,-1,0,1,0,-1],
+        duration: '3 weeks',
+        peak: '+15%',
+        note: 'Gap up, rapid mean reversion — quick Saudi repair'
+      },
+      {
+        name: '2022 Russia-Ukraine',
+        color: 'var(--teal)',
+        // Gradual grind from $80 to $130 over 2 months, then slow decline
+        path: [0,3,8,12,18,25,30,38,45,52,58,60,55,48,42,35,28,22,18,15,12,10,8,5],
+        duration: '6 months',
+        peak: '+60%',
+        note: 'Grinding rally on sanctions + supply fears, then demand destruction'
+      },
+      {
+        name: '2023 Houthi Red Sea',
+        color: 'var(--purple)',
+        // Oil was muted (+5%), but freight spiked +300%
+        path: [0,1,3,5,4,3,5,6,5,4,3,5,4,3,2,1,0,-1,0,1],
+        duration: '4 months',
+        peak: '+5% oil / +300% freight',
+        note: 'Oil muted (rerouting worked), freight exploded'
+      }
+    ];
+
+    // Build SVG overlay chart
+    var width = 280;
+    var height = 110;
+    var padding = 30;
+    var chartW = width - padding - 10;
+    var chartH = height - 25;
+
+    var svg = '<svg width="' + width + '" height="' + height + '" style="display:block;margin:4px auto">';
+    // Grid
+    svg += '<line x1="' + padding + '" y1="5" x2="' + padding + '" y2="' + (5 + chartH) + '" stroke="var(--border)" stroke-width="0.5"/>';
+    svg += '<line x1="' + padding + '" y1="' + (5 + chartH) + '" x2="' + (padding + chartW) + '" y2="' + (5 + chartH) + '" stroke="var(--border)" stroke-width="0.5"/>';
+    // Zero line
+    var zeroY = 5 + chartH * 0.5;
+    svg += '<line x1="' + padding + '" y1="' + zeroY + '" x2="' + (padding + chartW) + '" y2="' + zeroY + '" stroke="var(--muted)" stroke-width="0.5" stroke-dasharray="3,3" opacity="0.3"/>';
+    // Labels
+    svg += '<text x="2" y="10" fill="var(--muted)" font-size="7" font-family="IBM Plex Mono,monospace">+110%</text>';
+    svg += '<text x="2" y="' + (zeroY + 3) + '" fill="var(--muted)" font-size="7" font-family="IBM Plex Mono,monospace">0%</text>';
+    svg += '<text x="' + padding + '" y="' + (height - 2) + '" fill="var(--muted)" font-size="7" font-family="IBM Plex Mono,monospace">Day 0</text>';
+    svg += '<text x="' + (padding + chartW - 20) + '" y="' + (height - 2) + '" fill="var(--muted)" font-size="7" font-family="IBM Plex Mono,monospace">+6mo</text>';
+
+    // Draw each analog
+    analogs.forEach(function(a) {
+      var maxVal = 110;
+      var minVal = -10;
+      var valRange = maxVal - minVal;
+      var points = a.path.map(function(v, i) {
+        var x = padding + (i / (a.path.length - 1)) * chartW;
+        var y = 5 + chartH - ((v - minVal) / valRange) * chartH;
+        return x + ',' + y;
+      }).join(' ');
+      svg += '<polyline points="' + points + '" fill="none" stroke="' + a.color + '" stroke-width="1.5" opacity="0.7"/>';
+    });
+
+    // "NOW" marker (day 0 area)
+    svg += '<circle cx="' + padding + '" cy="' + zeroY + '" r="3" fill="var(--white)" stroke="var(--gold)" stroke-width="1"/>';
+    svg += '<text x="' + (padding + 6) + '" y="' + (zeroY + 3) + '" fill="var(--gold)" font-size="7" font-family="IBM Plex Mono,monospace">NOW</text>';
+
+    svg += '</svg>';
+
+    // Legend
+    var legend = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px">';
+    analogs.forEach(function(a) {
+      legend += '<div style="display:flex;align-items:center;gap:5px;font-family:IBM Plex Mono,monospace;font-size:8px">';
+      legend += '<div style="width:12px;height:3px;background:' + a.color + ';border-radius:1px;flex-shrink:0"></div>';
+      legend += '<span style="color:' + a.color + '">' + a.name + ' (' + a.peak + ')</span>';
+      legend += '</div>';
+    });
+    legend += '</div>';
+
+    // Key takeaway
+    var takeaway = '<div class="callout-box callout-gold" style="margin-top:6px"><div style="font-size:9px;color:var(--text);line-height:1.4">'
+      + '<strong style="color:var(--gold)">Pattern:</strong> Hormuz events most resemble 1990 (supply disruption) or 2022 (sanctions). '
+      + 'Quick resolution → Abqaiq path (spike + revert). Extended conflict → Kuwait/Ukraine path (grind + overshoot).'
+      + '</div></div>';
+
+    container.innerHTML = svg + legend + takeaway;
+  }
+
   // ═══════ INIT ═══════
   function init() {
     // Render all data-driven sections (mock data first, live overwrites)
@@ -1233,6 +1566,21 @@
     // Live data: NASA FIRMS fires (overwrites simulated)
     setTimeout(loadFIRMSFires, 3500);
     setInterval(loadFIRMSFires, 15 * 60000);
+
+    // Live data: SPR levels
+    setTimeout(loadSPR, 4000);
+    setInterval(loadSPR, 60 * 60000);
+
+    // Live data: Crack spreads
+    setTimeout(loadCrackSpreads, 4500);
+    setInterval(loadCrackSpreads, 60000);
+
+    // IV Skew chart (derived from options)
+    setTimeout(loadIVSkew, 5000);
+    setInterval(loadIVSkew, 2 * 60000);
+
+    // Historical analogs (static, render once)
+    renderHistoricalAnalogs();
   }
 
   // Wait for DOM
