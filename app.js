@@ -866,25 +866,40 @@
       });
 
       // Backup signal to localStorage for track record
+      // Only log once per day OR if direction/expression changes
       if (data.consensus && data.consensus.top_expression !== 'no_trade' && data.world_state) {
         try {
           var existing = JSON.parse(localStorage.getItem('mirofish_signals') || '[]');
-          existing.unshift({
-            timestamp: data.timestamp || new Date().toISOString(),
-            direction: data.consensus.bullish_prob > data.consensus.bearish_prob ? 'bullish' : data.consensus.bearish_prob > data.consensus.bullish_prob ? 'bearish' : 'neutral',
-            expression: data.consensus.top_expression,
-            bullish_prob: data.consensus.bullish_prob,
-            bearish_prob: data.consensus.bearish_prob,
-            avg_confidence: data.consensus.avg_confidence,
-            disagreement: data.consensus.disagreement_score,
-            agent_count: data.consensus.agent_count,
-            top_drivers: data.consensus.top_drivers,
-            wti_at_signal: data.world_state.prices && data.world_state.prices.wti ? data.world_state.prices.wti.price : 0,
-            brent_at_signal: data.world_state.prices && data.world_state.prices.brent ? data.world_state.prices.brent.price : 0,
-            vix_at_signal: data.world_state.macro ? data.world_state.macro.vix : 0,
-          });
-          if (existing.length > 200) existing.length = 200;
-          localStorage.setItem('mirofish_signals', JSON.stringify(existing));
+          var newDir = data.consensus.bullish_prob > data.consensus.bearish_prob ? 'bullish' : data.consensus.bearish_prob > data.consensus.bullish_prob ? 'bearish' : 'neutral';
+          var newExpr = data.consensus.top_expression;
+          var today = new Date().toISOString().split('T')[0];
+          var shouldLog = true;
+          if (existing.length > 0) {
+            var last = existing[0];
+            var lastDate = (last.timestamp || '').split('T')[0];
+            // Same day + same direction + same expression = skip
+            if (lastDate === today && last.direction === newDir && last.expression === newExpr) {
+              shouldLog = false;
+            }
+          }
+          if (shouldLog) {
+            existing.unshift({
+              timestamp: data.timestamp || new Date().toISOString(),
+              direction: newDir,
+              expression: newExpr,
+              bullish_prob: data.consensus.bullish_prob,
+              bearish_prob: data.consensus.bearish_prob,
+              avg_confidence: data.consensus.avg_confidence,
+              disagreement: data.consensus.disagreement_score,
+              agent_count: data.consensus.agent_count,
+              top_drivers: data.consensus.top_drivers,
+              wti_at_signal: data.world_state.prices && data.world_state.prices.wti ? data.world_state.prices.wti.price : 0,
+              brent_at_signal: data.world_state.prices && data.world_state.prices.brent ? data.world_state.prices.brent.price : 0,
+              vix_at_signal: data.world_state.macro ? data.world_state.macro.vix : 0,
+            });
+            if (existing.length > 200) existing.length = 200;
+            localStorage.setItem('mirofish_signals', JSON.stringify(existing));
+          }
         } catch(e2) {}
       }
 
