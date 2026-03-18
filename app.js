@@ -1507,6 +1507,205 @@
     container.innerHTML = svg + legend + takeaway;
   }
 
+  // ═══════ WTI 12-MONTH PRICE HISTORY CHART ═══════
+  async function loadPriceHistory() {
+    const container = document.getElementById('price-history-chart');
+    if (!container) return;
+
+    try {
+      const res = await fetchTimeout('/api/history', 12000);
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      if (!data || !data.length) throw new Error('No data');
+
+      // Chart dimensions
+      const W = 600, H = 180;
+      const pad = { top: 16, right: 12, bottom: 28, left: 42 };
+      const cw = W - pad.left - pad.right;
+      const ch = H - pad.top - pad.bottom;
+
+      const closes = data.map(d => d.close);
+      const minP = Math.floor(Math.min(...closes) / 2) * 2 - 2;
+      const maxP = Math.ceil(Math.max(...closes) / 2) * 2 + 2;
+      const priceRange = maxP - minP;
+
+      // Scale functions
+      const sx = i => pad.left + (i / (data.length - 1)) * cw;
+      const sy = p => pad.top + ch - ((p - minP) / priceRange) * ch;
+
+      // Build line path
+      let linePath = '';
+      let areaPath = `M${sx(0)},${sy(closes[0])}`;
+      for (let i = 0; i < data.length; i++) {
+        const cmd = i === 0 ? 'M' : 'L';
+        linePath += `${cmd}${sx(i).toFixed(1)},${sy(closes[i]).toFixed(1)}`;
+        areaPath += `${i === 0 ? '' : 'L'}${sx(i).toFixed(1)},${sy(closes[i]).toFixed(1)}`;
+      }
+      areaPath += `L${sx(data.length - 1).toFixed(1)},${(pad.top + ch).toFixed(1)}L${sx(0).toFixed(1)},${(pad.top + ch).toFixed(1)}Z`;
+
+      // Y-axis grid lines + labels
+      const yTicks = 5;
+      let gridSvg = '';
+      for (let i = 0; i <= yTicks; i++) {
+        const price = minP + (priceRange * i / yTicks);
+        const y = sy(price);
+        gridSvg += `<line x1="${pad.left}" y1="${y.toFixed(1)}" x2="${W - pad.right}" y2="${y.toFixed(1)}" stroke="#1b2133" stroke-width="0.5"/>`;
+        gridSvg += `<text x="${pad.left - 4}" y="${(y + 3).toFixed(1)}" text-anchor="end" fill="#5a6278" font-size="7" font-family="'IBM Plex Mono',monospace">$${Math.round(price)}</text>`;
+      }
+
+      // X-axis month labels
+      let xLabels = '';
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      let lastMonth = -1;
+      for (let i = 0; i < data.length; i++) {
+        const d = new Date(data[i].date + 'T00:00:00');
+        const m = d.getMonth();
+        if (m !== lastMonth) {
+          lastMonth = m;
+          const label = months[m] + (m === 0 ? ' ' + d.getFullYear().toString().slice(2) : '');
+          xLabels += `<text x="${sx(i).toFixed(1)}" y="${(H - 4).toFixed(1)}" text-anchor="middle" fill="#5a6278" font-size="7" font-family="'IBM Plex Mono',monospace">${label}</text>`;
+        }
+      }
+
+      // Event annotations
+      const events = [
+        { date: '2025-04-01', label: 'OPEC+ cuts extended' },
+        { date: '2025-06-15', label: 'Iran nuclear talks collapse' },
+        { date: '2025-09-19', label: 'Abqaiq-style attack' },
+        { date: '2025-10-01', label: 'China stimulus' },
+        { date: '2025-12-15', label: 'Fed rate cut' },
+        { date: '2026-01-15', label: 'Iran-US tensions escalate' },
+        { date: '2026-02-20', label: 'Hormuz incidents begin' },
+        { date: '2026-03-05', label: 'US strikes Iran' },
+      ];
+
+      let annotSvg = '';
+      const dateIndex = {};
+      data.forEach((d, i) => { dateIndex[d.date] = i; });
+
+      events.forEach((evt, ei) => {
+        const idx = dateIndex[evt.date];
+        if (idx == null) {
+          // Find closest date
+          let closest = -1, minDiff = Infinity;
+          const evtTime = new Date(evt.date + 'T00:00:00').getTime();
+          data.forEach((d, i) => {
+            const diff = Math.abs(new Date(d.date + 'T00:00:00').getTime() - evtTime);
+            if (diff < minDiff) { minDiff = diff; closest = i; }
+          });
+          if (closest < 0) return;
+          const x = sx(closest);
+          const yTop = pad.top;
+          const yBot = pad.top + ch;
+          // Stagger label heights to avoid overlap
+          const labelY = pad.top + 6 + (ei % 3) * 9;
+          annotSvg += `<line x1="${x.toFixed(1)}" y1="${yTop}" x2="${x.toFixed(1)}" y2="${yBot}" stroke="#5a6278" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.6"/>`;
+          annotSvg += `<text x="${(x + 2).toFixed(1)}" y="${labelY.toFixed(1)}" fill="#e63946" font-size="6.5" font-family="'IBM Plex Mono',monospace" opacity="0.85">${evt.label}</text>`;
+        } else {
+          const x = sx(idx);
+          const yTop = pad.top;
+          const yBot = pad.top + ch;
+          const labelY = pad.top + 6 + (ei % 3) * 9;
+          annotSvg += `<line x1="${x.toFixed(1)}" y1="${yTop}" x2="${x.toFixed(1)}" y2="${yBot}" stroke="#5a6278" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.6"/>`;
+          annotSvg += `<text x="${(x + 2).toFixed(1)}" y="${labelY.toFixed(1)}" fill="#e63946" font-size="6.5" font-family="'IBM Plex Mono',monospace" opacity="0.85">${evt.label}</text>`;
+        }
+      });
+
+      // Current price indicator
+      const lastClose = closes[closes.length - 1];
+      const lastX = sx(data.length - 1);
+      const lastY = sy(lastClose);
+      const priceDot = `<circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3" fill="#f4a261" opacity="0.9"/>`;
+      const priceLabel = `<text x="${(lastX - 4).toFixed(1)}" y="${(lastY - 6).toFixed(1)}" text-anchor="end" fill="#f4a261" font-size="8" font-weight="600" font-family="'IBM Plex Mono',monospace">$${lastClose.toFixed(2)}</text>`;
+
+      // Hover tooltip overlay (invisible rects that show tooltip on hover)
+      let hoverRects = '';
+      const segW = cw / data.length;
+      for (let i = 0; i < data.length; i++) {
+        hoverRects += `<rect x="${(sx(i) - segW / 2).toFixed(1)}" y="${pad.top}" width="${segW.toFixed(1)}" height="${ch}" fill="transparent" data-idx="${i}" class="ph-hover"/>`;
+      }
+
+      const svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;background:var(--panel);border-radius:4px;overflow:visible" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="phGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f4a261" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#f4a261" stop-opacity="0.02"/>
+    </linearGradient>
+  </defs>
+  ${gridSvg}
+  ${xLabels}
+  <path d="${areaPath}" fill="url(#phGrad)"/>
+  <path d="${linePath}" fill="none" stroke="#f4a261" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  ${annotSvg}
+  ${priceDot}
+  ${priceLabel}
+  ${hoverRects}
+  <g id="ph-tooltip" style="display:none">
+    <line id="ph-tt-line" y1="${pad.top}" y2="${pad.top + ch}" stroke="#eef0f7" stroke-width="0.5" opacity="0.4"/>
+    <circle id="ph-tt-dot" r="2.5" fill="#f4a261"/>
+    <rect id="ph-tt-bg" rx="2" ry="2" fill="#0d0f18" stroke="#1b2133" stroke-width="0.5"/>
+    <text id="ph-tt-text" fill="#eef0f7" font-size="7" font-family="'IBM Plex Mono',monospace"/>
+  </g>
+</svg>`;
+
+      // Stats row
+      const first = closes[0], last = closes[closes.length - 1];
+      const chg = last - first;
+      const chgPct = ((chg / first) * 100).toFixed(1);
+      const hi = Math.max(...closes).toFixed(2);
+      const lo = Math.min(...closes).toFixed(2);
+      const chgColor = chg >= 0 ? 'var(--green)' : 'var(--accent)';
+      const arrow = chg >= 0 ? '▲' : '▼';
+
+      const stats = `<div style="display:flex;gap:12px;margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:7.5px;color:var(--muted);flex-wrap:wrap">
+  <span>12M Change: <strong style="color:${chgColor}">${arrow} ${chg >= 0 ? '+' : ''}${chg.toFixed(2)} (${chg >= 0 ? '+' : ''}${chgPct}%)</strong></span>
+  <span>High: <strong style="color:var(--white)">$${hi}</strong></span>
+  <span>Low: <strong style="color:var(--white)">$${lo}</strong></span>
+  <span>Last: <strong style="color:var(--gold)">$${last.toFixed(2)}</strong></span>
+</div>`;
+
+      container.innerHTML = svg + stats;
+
+      // Attach hover events
+      const svgEl = container.querySelector('svg');
+      const tooltip = svgEl.querySelector('#ph-tooltip');
+      const ttLine = svgEl.querySelector('#ph-tt-line');
+      const ttDot = svgEl.querySelector('#ph-tt-dot');
+      const ttBg = svgEl.querySelector('#ph-tt-bg');
+      const ttText = svgEl.querySelector('#ph-tt-text');
+
+      container.querySelectorAll('.ph-hover').forEach(rect => {
+        rect.addEventListener('mouseenter', function () {
+          const i = +this.getAttribute('data-idx');
+          const x = sx(i);
+          const y = sy(closes[i]);
+          const label = data[i].date + '  $' + closes[i].toFixed(2);
+          tooltip.style.display = '';
+          ttLine.setAttribute('x1', x.toFixed(1));
+          ttLine.setAttribute('x2', x.toFixed(1));
+          ttDot.setAttribute('cx', x.toFixed(1));
+          ttDot.setAttribute('cy', y.toFixed(1));
+          ttText.textContent = label;
+          const tw = label.length * 4.2 + 8;
+          const tx = Math.min(x - tw / 2, W - pad.right - tw);
+          const txClamped = Math.max(pad.left, tx);
+          ttBg.setAttribute('x', txClamped.toFixed(1));
+          ttBg.setAttribute('y', (pad.top - 14).toFixed(1));
+          ttBg.setAttribute('width', tw.toFixed(1));
+          ttBg.setAttribute('height', '12');
+          ttText.setAttribute('x', (txClamped + 4).toFixed(1));
+          ttText.setAttribute('y', (pad.top - 5).toFixed(1));
+        });
+        rect.addEventListener('mouseleave', function () {
+          tooltip.style.display = 'none';
+        });
+      });
+
+    } catch (e) {
+      container.innerHTML = '<div class="note" style="color:var(--accent)">Price history unavailable</div>';
+    }
+  }
+
   // ═══════ INIT ═══════
   function init() {
     // Render all data-driven sections (mock data first, live overwrites)
@@ -1578,6 +1777,10 @@
     // IV Skew chart (derived from options)
     setTimeout(loadIVSkew, 5000);
     setInterval(loadIVSkew, 2 * 60000);
+
+    // Live data: WTI 12-month price history
+    setTimeout(loadPriceHistory, 5500);
+    setInterval(loadPriceHistory, 60 * 60000);
 
     // Historical analogs (static, render once)
     renderHistoricalAnalogs();
