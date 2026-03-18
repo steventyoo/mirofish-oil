@@ -1,7 +1,18 @@
 // Vercel serverless function: fetch live prices from Yahoo Finance
 // Returns all tickers in one batch call
 
-const TICKERS = ['CL=F', 'BZ=F', 'TTF=F', 'DX-Y.NYB', '^GSPC', '^VIX', '^TNX', 'GC=F', 'RB=F', 'HO=F'];
+const TICKERS = [
+  // Commodities
+  'CL=F', 'BZ=F', 'TTF=F', 'GC=F', 'RB=F', 'HO=F',
+  // Macro
+  'DX-Y.NYB', '^GSPC', '^VIX', '^TNX',
+  // Defense stocks
+  'RTX', 'LMT', 'NOC', 'GD', 'BA', 'LHX', 'HII',
+  // Energy stocks
+  'XOM', 'CVX', 'COP', 'OXY', 'SLB', 'HAL',
+  // Oil ETFs
+  'USO', 'SCO', 'UCO',
+];
 
 async function fetchQuote(symbol) {
   try {

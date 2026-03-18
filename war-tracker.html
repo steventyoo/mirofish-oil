@@ -309,14 +309,25 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
 </div>
 
 <!-- ═══════ DEFENSE STOCK CORRELATION ═══════ -->
-<div class="section-header"><span class="sh-icon">📊</span> Defense & Energy Stock Correlation <span class="sh-sub">YAHOO FINANCE · LIVE</span></div>
+<div class="section-header"><span class="sh-icon">📊</span> Defense & Energy Fundamentals <span class="sh-sub">YAHOO FINANCE · LIVE</span></div>
 
-<div class="card" style="margin-bottom:20px">
-  <div class="card-title"><span class="live"></span> Defense Stocks as War Sentiment Indicator</div>
-  <div id="defense-stocks"><div class="note">Loading defense stocks...</div></div>
-  <div class="callout callout-gold" style="margin-top:8px">
-    <strong style="color:var(--gold)">Leading indicator:</strong> Defense stocks (RTX, LMT, NOC) often move before oil on conflict escalation. If defense stocks surge while oil is flat, the market is pricing in conflict expansion before it hits supply. If defense stocks fall while oil is elevated, the market thinks de-escalation is coming.
-  </div>
+<div class="callout callout-gold" style="margin-bottom:16px">
+  <strong style="color:var(--gold)">Leading indicator:</strong> Defense stocks (RTX, LMT, NOC) often move before oil on conflict escalation. If defense stocks surge while oil is flat, the market is pricing in conflict expansion before it hits supply. If defense stocks fall while oil is elevated, the market thinks de-escalation is coming.
+</div>
+
+<div class="card" style="margin-bottom:16px;overflow-x:auto">
+  <div class="card-title"><span class="live"></span> Defense Contractors — War Beneficiaries</div>
+  <div id="defense-table"><div class="note">Loading defense fundamentals...</div></div>
+</div>
+
+<div class="card" style="margin-bottom:16px;overflow-x:auto">
+  <div class="card-title"><span class="live"></span> Energy Majors — Oil Price Beneficiaries</div>
+  <div id="energy-table"><div class="note">Loading energy fundamentals...</div></div>
+</div>
+
+<div class="card" style="margin-bottom:20px;overflow-x:auto">
+  <div class="card-title"><span class="live"></span> Oil ETFs — Direct Oil Exposure</div>
+  <div id="etf-table"><div class="note">Loading ETF data...</div></div>
 </div>
 
 <!-- ═══════ NUCLEAR RISK MONITOR ═══════ -->
@@ -470,41 +481,65 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
     container.innerHTML = html;
   }
 
-  // ── Defense Stocks ──
-  async function loadDefenseStocks() {
-    var container = document.getElementById('defense-stocks');
-    if (!container) return;
+  // ── Fundamentals Tables ──
+  function fmtNum(n, dec) { if (n === null || n === undefined) return '—'; return n.toFixed(dec || 2); }
+  function fmtPct(n) { if (n === null || n === undefined) return '—'; return (n * 100).toFixed(1) + '%'; }
+  function fmtMcap(n) { if (!n) return '—'; if (n >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T'; if (n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B'; if (n >= 1e6) return '$' + (n/1e6).toFixed(0) + 'M'; return '$' + n; }
+
+  function buildTable(stocks, extra) {
+    if (!stocks || stocks.length === 0) return '<div class="note">No data</div>';
+    var h = '<table class="intel-table" style="font-size:9px;min-width:900px">';
+    h += '<tr><th>Ticker</th><th>Name</th><th class="val">Price</th><th class="val">Chg%</th><th class="val">Mkt Cap</th><th class="val">P/E</th><th class="val">Fwd P/E</th><th class="val">P/S</th><th class="val">EV/EBITDA</th><th class="val">Revenue</th><th class="val">EBITDA</th><th class="val">Margin</th><th class="val">ROE</th><th class="val">Rev Growth</th><th class="val">Div Yield</th><th class="val">Beta</th><th class="val">52W Range</th></tr>';
+    stocks.forEach(function(s) {
+      var chgC = s.changePct >= 0 ? 'var(--green)' : 'var(--accent)';
+      var peC = s.pe && s.pe < 15 ? 'var(--green)' : s.pe && s.pe > 30 ? 'var(--accent)' : 'var(--text)';
+      var marginVal = s.profitMargin || s.operatingMargin;
+      var marginC = marginVal && marginVal > 0.15 ? 'var(--green)' : marginVal && marginVal > 0.05 ? 'var(--gold)' : 'var(--accent)';
+      var roeC = s.roe && s.roe > 0.2 ? 'var(--green)' : s.roe && s.roe > 0.1 ? 'var(--gold)' : 'var(--text)';
+      var growthC = s.revenueGrowth && s.revenueGrowth > 0.1 ? 'var(--green)' : s.revenueGrowth && s.revenueGrowth > 0 ? 'var(--teal)' : 'var(--accent)';
+      h += '<tr>'
+        + '<td style="color:var(--white);font-weight:700">' + s.symbol + '</td>'
+        + '<td style="color:var(--text);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (s.name || '—') + '</td>'
+        + '<td class="val" style="color:var(--white);font-weight:600">$' + fmtNum(s.price) + '</td>'
+        + '<td class="val" style="color:' + chgC + '">' + (s.changePct >= 0 ? '+' : '') + fmtNum(s.changePct) + '%</td>'
+        + '<td class="val">' + fmtMcap(s.marketCap) + '</td>'
+        + '<td class="val" style="color:' + peC + '">' + (s.pe ? fmtNum(s.pe, 1) : '—') + '</td>'
+        + '<td class="val">' + (s.forwardPE ? fmtNum(s.forwardPE, 1) : '—') + '</td>'
+        + '<td class="val">' + (s.ps ? fmtNum(s.ps, 1) : '—') + '</td>'
+        + '<td class="val">' + (s.evEbitda ? fmtNum(s.evEbitda, 1) : '—') + '</td>'
+        + '<td class="val">' + fmtMcap(s.revenue) + '</td>'
+        + '<td class="val">' + fmtMcap(s.ebitda) + '</td>'
+        + '<td class="val" style="color:' + marginC + '">' + fmtPct(marginVal) + '</td>'
+        + '<td class="val" style="color:' + roeC + '">' + fmtPct(s.roe) + '</td>'
+        + '<td class="val" style="color:' + growthC + '">' + fmtPct(s.revenueGrowth) + '</td>'
+        + '<td class="val">' + (s.dividendYield ? fmtPct(s.dividendYield) : '—') + '</td>'
+        + '<td class="val">' + (s.beta ? fmtNum(s.beta, 2) : '—') + '</td>'
+        + '<td class="val" style="font-size:8px;color:var(--muted)">$' + (s.fiftyTwoWeekLow ? fmtNum(s.fiftyTwoWeekLow, 0) : '?') + '-' + (s.fiftyTwoWeekHigh ? fmtNum(s.fiftyTwoWeekHigh, 0) : '?') + '</td>'
+        + '</tr>';
+    });
+    h += '</table>';
+    return h;
+  }
+
+  async function loadFundamentals() {
     try {
-      var res = await fetchTimeout('/api/prices', 10000);
-      if (!res.ok) return;
-      var batch = await res.json();
+      var res = await fetchTimeout('/api/fundamentals', 20000);
+      if (!res.ok) throw new Error('api failed');
+      var data = await res.json();
 
-      var tickers = [
-        { sym: 'RTX', name: 'RTX (Raytheon)', color: 'var(--green)' },
-        { sym: 'LMT', name: 'Lockheed Martin', color: 'var(--green)' },
-        { sym: 'NOC', name: 'Northrop Grumman', color: 'var(--green)' },
-        { sym: 'GD', name: 'General Dynamics', color: 'var(--green)' },
-        { sym: 'BA', name: 'Boeing', color: 'var(--blue)' },
-        { sym: 'XOM', name: 'Exxon Mobil', color: 'var(--gold)' },
-        { sym: 'CVX', name: 'Chevron', color: 'var(--gold)' },
-        { sym: 'COP', name: 'ConocoPhillips', color: 'var(--gold)' },
-      ];
+      var defEl = document.getElementById('defense-table');
+      var eneEl = document.getElementById('energy-table');
+      var etfEl = document.getElementById('etf-table');
 
-      var html = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">';
-      tickers.forEach(function(t) {
-        var q = batch[t.sym];
-        if (!q) return;
-        var chgC = q.change >= 0 ? 'var(--green)' : 'var(--accent)';
-        html += '<div class="sc-box" style="text-align:center">'
-          + '<div class="v" style="font-size:18px;color:' + t.color + '">$' + q.price.toFixed(2) + '</div>'
-          + '<div class="l">' + t.name + '</div>'
-          + '<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:' + chgC + ';margin-top:2px">' + (q.change >= 0 ? '+' : '') + q.changePct.toFixed(2) + '%</div>'
-          + '</div>';
-      });
-      html += '</div>';
-      container.innerHTML = html;
+      if (defEl && data.defense) defEl.innerHTML = buildTable(data.defense);
+      if (eneEl && data.energy) eneEl.innerHTML = buildTable(data.energy);
+      if (etfEl && data.etfs) etfEl.innerHTML = buildTable(data.etfs);
     } catch (e) {
-      container.innerHTML = '<div class="note">Defense stocks require tickers added to /api/prices</div>';
+      var msg = '<div class="note">Fundamentals: ' + e.message + '</div>';
+      var defEl = document.getElementById('defense-table');
+      var eneEl = document.getElementById('energy-table');
+      if (defEl) defEl.innerHTML = msg;
+      if (eneEl) eneEl.innerHTML = msg;
     }
   }
 
@@ -533,8 +568,8 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
     updateUTC();
     setInterval(updateUTC, 60000);
     renderStrikeChart();
-    loadDefenseStocks();
-    setInterval(loadDefenseStocks, 5 * 60000);
+    loadFundamentals();
+    setInterval(loadFundamentals, 5 * 60000);
     setTimeout(loadCentcom, 1000);
     setInterval(loadCentcom, 30 * 60000);
   }
