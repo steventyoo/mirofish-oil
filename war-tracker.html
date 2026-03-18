@@ -321,6 +321,11 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
 </div>
 
 <div class="card" style="margin-bottom:16px;overflow-x:auto">
+  <div class="card-title"><span class="live"></span> Drone & Drone Sensor Stocks — War Tech Beneficiaries</div>
+  <div id="drone-table"><div class="note">Loading drone fundamentals...</div></div>
+</div>
+
+<div class="card" style="margin-bottom:16px;overflow-x:auto">
   <div class="card-title"><span class="live"></span> Energy Majors — Oil Price Beneficiaries</div>
   <div id="energy-table"><div class="note">Loading energy fundamentals...</div></div>
 </div>
@@ -489,7 +494,7 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
   function buildTable(stocks, extra) {
     if (!stocks || stocks.length === 0) return '<div class="note">No data</div>';
     var h = '<table class="intel-table" style="font-size:9px;min-width:900px">';
-    h += '<tr><th>Ticker</th><th>Name</th><th class="val">Price</th><th class="val">Chg%</th><th class="val">Mkt Cap</th><th class="val">P/E</th><th class="val">Fwd P/E</th><th class="val">P/S</th><th class="val">EV/EBITDA</th><th class="val">Revenue</th><th class="val">EBITDA</th><th class="val">Margin</th><th class="val">ROE</th><th class="val">Rev Growth</th><th class="val">Div Yield</th><th class="val">Beta</th><th class="val">52W Range</th></tr>';
+    h += '<tr><th>Ticker</th><th>Name</th><th class="val">Price</th><th class="val">Chg%</th><th class="val">Mkt Cap</th><th class="val">P/E</th><th class="val">Fwd P/E</th><th class="val">P/S</th><th class="val">EV/EBITDA</th><th class="val">Revenue</th><th class="val">EBITDA</th><th class="val">Margin</th><th class="val">ROE</th><th class="val">Rev Growth</th><th class="val">Div Yield</th><th class="val">Beta</th><th class="val">52W Range</th><th>War Relevance</th></tr>';
     stocks.forEach(function(s) {
       var chgC = s.changePct >= 0 ? 'var(--green)' : 'var(--accent)';
       var peC = s.pe && s.pe < 15 ? 'var(--green)' : s.pe && s.pe > 30 ? 'var(--accent)' : 'var(--text)';
@@ -515,6 +520,7 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
         + '<td class="val">' + (s.dividendYield ? fmtPct(s.dividendYield) : '—') + '</td>'
         + '<td class="val">' + (s.beta ? fmtNum(s.beta, 2) : '—') + '</td>'
         + '<td class="val" style="font-size:8px;color:var(--muted)">$' + (s.fiftyTwoWeekLow ? fmtNum(s.fiftyTwoWeekLow, 0) : '?') + '-' + (s.fiftyTwoWeekHigh ? fmtNum(s.fiftyTwoWeekHigh, 0) : '?') + '</td>'
+        + '<td style="font-size:8px;color:var(--gold);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (s.note || '') + '</td>'
         + '</tr>';
     });
     h += '</table>';
@@ -528,10 +534,12 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
       var data = await res.json();
 
       var defEl = document.getElementById('defense-table');
+      var droEl = document.getElementById('drone-table');
       var eneEl = document.getElementById('energy-table');
       var etfEl = document.getElementById('etf-table');
 
       if (defEl && data.defense) defEl.innerHTML = buildTable(data.defense);
+      if (droEl && data.drone) droEl.innerHTML = buildTable(data.drone);
       if (eneEl && data.energy) eneEl.innerHTML = buildTable(data.energy);
       if (etfEl && data.etfs) etfEl.innerHTML = buildTable(data.etfs);
     } catch (e) {
