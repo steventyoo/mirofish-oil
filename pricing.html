@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLACK ALPHA — Pricing & Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0b0f; --panel: #0d0f18; --border: #1b2133;
+  --accent: #e63946; --gold: #f4a261; --teal: #2a9d8f;
+  --blue: #457b9d; --purple: #6c5ce7; --text: #c8cdd8;
+  --muted: #5a6278; --white: #eef0f7; --green: #52b788;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex Sans', sans-serif; color: var(--text); }
+::-webkit-scrollbar { width: 2px; }
+::-webkit-scrollbar-thumb { background: var(--border); }
+
+.header { height: 68px; background: #080a12; border-bottom: 2px solid var(--accent); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+.breaking-badge { background: var(--accent); color: #fff; font-weight: 700; padding: 2px 10px; border-radius: 2px; margin-right: 14px; font-size: 11px; letter-spacing: 2px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.main-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: var(--white); line-height: 1; }
+.main-title span { color: var(--accent); }
+.subtitle { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: .8px; margin-top: 2px; text-transform: uppercase; }
+.nav-tabs { display: flex; gap: 0; align-items: stretch; height: 100%; }
+.nav-tab { display: flex; align-items: center; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--muted); text-decoration: none; padding: 0 22px; border-bottom: 3px solid transparent; transition: all 0.2s; }
+.nav-tab:hover { color: var(--white); background: rgba(255,255,255,.03); }
+.nav-tab.active { color: var(--white); border-bottom-color: var(--accent); background: rgba(230,57,70,.06); }
+
+.container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+@media (max-width: 900px) { .grid-2, .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr 1fr; } }
+
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 16px; }
+.card-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+.card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.card-title .live { width: 5px; height: 5px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+
+.stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 12px; text-align: center; }
+.stat-card .sv { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; }
+.stat-card .sl { font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; }
+.stat-card .sc { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; margin-top: 2px; }
+
+.section-header { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--white); margin: 28px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.section-header .sh-icon { font-size: 22px; }
+.section-header .sh-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-left: auto; }
+
+.sg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sg-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.sc-box { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 3px; padding: 8px 10px; }
+.sc-box .v { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--white); line-height: 1; }
+.sc-box .l { font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: var(--muted); margin-top: 2px; text-transform: uppercase; }
+
+.opt-table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 10px; }
+.opt-table th { text-align: left; color: var(--muted); font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 5px 6px; border-bottom: 1px solid var(--border); }
+.opt-table td { padding: 5px 6px; border-bottom: 1px solid rgba(255,255,255,.03); }
+.opt-table tr:hover td { background: rgba(255,255,255,.02); }
+.opt-table .val { text-align: right; }
+.opt-table .strike { color: var(--white); font-weight: 600; }
+.opt-table .itm { background: rgba(244,162,97,.04); }
+
+.callout { padding: 10px 12px; border-radius: 3px; margin-top: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; line-height: 1.5; }
+.callout-red { background: rgba(230,57,70,.08); border: 1px solid rgba(230,57,70,.2); }
+.callout-gold { background: rgba(244,162,97,.06); border: 1px solid rgba(244,162,97,.2); }
+.callout-green { background: rgba(82,183,136,.06); border: 1px solid rgba(82,183,136,.2); }
+.callout strong { color: var(--white); }
+.note { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); }
+
+.bar-row { margin-bottom: 6px; }
+.bar-top { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 10px; margin-bottom: 2px; }
+.bar-val { color: var(--gold); font-size: 10px; }
+.bar-bg { height: 4px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+.bar-fg { height: 4px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;flex-shrink:0">
+    <span class="breaking-badge">LIVE</span>
+    <div>
+      <div class="main-title">BLACK <span>ALPHA</span></div>
+      <div class="subtitle">Global Oil Monitor</div>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <a href="/" class="nav-tab">Dashboard</a>
+    <a href="/track-record.html" class="nav-tab">Track Record</a>
+    <a href="/supply-demand.html" class="nav-tab">Supply & Demand</a>
+    <a href="/hormuz-intel.html" class="nav-tab">Hormuz Intel</a>
+    <a href="/pricing.html" class="nav-tab active">Pricing</a>
+  </div>
+  <div style="text-align:right;flex-shrink:0">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold);letter-spacing:2px" id="live-utc"></div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted)">Yahoo Finance · CBOE · CME · Polymarket</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ═══════ LIVE PRICES ═══════ -->
+<div class="section-header"><span class="sh-icon">💰</span> Live Commodity Prices <span class="sh-sub">YAHOO FINANCE · LIVE</span></div>
+
+<div class="grid-5" id="live-prices"><div class="note">Loading prices...</div></div>
+
+<!-- ═══════ 12-MONTH CHART ═══════ -->
+<div class="section-header"><span class="sh-icon">📈</span> WTI 12-Month Price History <span class="sh-sub">YAHOO FINANCE · LIVE</span></div>
+
+<div class="card" style="margin-bottom:20px">
+  <div id="price-chart"><div class="note">Loading 12-month price history...</div></div>
+</div>
+
+<!-- ═══════ FUTURES TERM STRUCTURE ═══════ -->
+<div class="section-header"><span class="sh-icon">📊</span> Futures & Term Structure <span class="sh-sub">LIVE</span></div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title"><span class="live"></span> Futures Prices</div>
+    <div id="futures-data"><div class="note">Loading futures...</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="live"></span> Crack Spreads — Refinery Margins</div>
+    <div id="crack-data"><div class="note">Loading crack spreads...</div></div>
+  </div>
+</div>
+
+<!-- ═══════ OPTIONS CHAIN ═══════ -->
+<div class="section-header"><span class="sh-icon">🎯</span> CL Options Chain <span class="sh-sub">YAHOO FINANCE · LIVE</span></div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title"><span class="live"></span> Options Summary</div>
+    <div id="options-summary"><div class="note">Loading options data...</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="live"></span> IV Skew — Volatility by Strike</div>
+    <div id="iv-skew"><div class="note">Loading skew data...</div></div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">OTM Calls</div>
+    <div id="calls-table"><div class="note">Loading...</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">OTM Puts</div>
+    <div id="puts-table"><div class="note">Loading...</div></div>
+  </div>
+</div>
+
+<!-- ═══════ CROSS-ASSET ═══════ -->
+<div class="section-header"><span class="sh-icon">🌐</span> Cross-Asset Monitor <span class="sh-sub">LIVE</span></div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title"><span class="live"></span> Cross-Asset Prices</div>
+    <div id="cross-asset"><div class="note">Loading...</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Oil-Dollar Correlation</div>
+    <div id="oil-dxy"><div class="note">Loading...</div></div>
+    <div class="callout callout-gold" style="margin-top:8px">
+      <strong style="color:var(--gold)">Inverse correlation:</strong> Oil and DXY typically move inversely. Weak dollar = higher oil (priced in USD). When correlation breaks (both rising), it signals genuine supply disruption overriding macro.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ POLYMARKET PRICE TARGETS ═══════ -->
+<div class="section-header"><span class="sh-icon">🎲</span> Prediction Market Price Targets <span class="sh-sub">POLYMARKET · LIVE</span></div>
+
+<div class="card" style="margin-bottom:20px">
+  <div id="poly-prices"><div class="note">Loading Polymarket price targets...</div></div>
+</div>
+
+<div style="text-align:center;padding:30px 0;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">
+  BLACK ALPHA — Pricing & Options · Data: Yahoo Finance, CBOE, CME, Polymarket
+</div>
+
+</div><!-- /container -->
+
+<script>
+(function() {
+  'use strict';
+
+  function fetchTimeout(url, ms) {
+    var c = new AbortController();
+    var t = setTimeout(function() { c.abort(); }, ms);
+    return fetch(url, { signal: c.signal }).finally(function() { clearTimeout(t); });
+  }
+
+  // ── UTC Clock ──
+  function updateUTC() {
+    var el = document.getElementById('live-utc');
+    if (!el) return;
+    var now = new Date();
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    el.textContent = months[now.getUTCMonth()] + ' ' + now.getUTCDate() + ', ' + now.getUTCFullYear() + ' \u00b7 ' + String(now.getUTCHours()).padStart(2,'0') + ':' + String(now.getUTCMinutes()).padStart(2,'0') + ' UTC';
+  }
+
+  // ── Live Prices ──
+  async function loadPrices() {
+    try {
+      var res = await fetchTimeout('/api/prices', 10000);
+      if (!res.ok) return;
+      var batch = await res.json();
+
+      var tickers = [
+        { sym: 'CL=F', name: 'WTI Crude', color: 'var(--gold)' },
+        { sym: 'BZ=F', name: 'Brent Crude', color: 'var(--accent)' },
+        { sym: 'RB=F', name: 'RBOB Gasoline', color: 'var(--green)' },
+        { sym: 'HO=F', name: 'Heating Oil', color: 'var(--teal)' },
+        { sym: 'GC=F', name: 'Gold', color: 'var(--gold)' },
+        { sym: '^VIX', name: 'VIX', color: 'var(--accent)' },
+        { sym: 'DX-Y.NYB', name: 'DXY', color: 'var(--blue)' },
+        { sym: '^GSPC', name: 'S&P 500', color: 'var(--green)' },
+        { sym: '^TNX', name: 'US 10Y', color: 'var(--purple)' },
+        { sym: 'TTF=F', name: 'TTF Gas', color: 'var(--teal)' },
+      ];
+
+      var container = document.getElementById('live-prices');
+      var html = '';
+      tickers.forEach(function(t) {
+        var q = batch[t.sym];
+        if (!q) return;
+        var sign = q.change >= 0 ? '+' : '';
+        var arrow = q.change >= 0 ? '\u25B2' : '\u25BC';
+        var chgColor = q.change >= 0 ? 'var(--green)' : 'var(--accent)';
+        var prefix = t.sym.includes('^') || t.sym.includes('DX') ? '' : '$';
+        var suffix = t.sym === '^TNX' ? '%' : '';
+        html += '<div class="stat-card">'
+          + '<div class="sv" style="color:' + t.color + '">' + prefix + q.price.toFixed(2) + suffix + '</div>'
+          + '<div class="sl">' + t.name + '</div>'
+          + '<div class="sc" style="color:' + chgColor + '">' + arrow + ' ' + sign + q.change.toFixed(2) + ' (' + sign + q.changePct.toFixed(2) + '%)</div>'
+          + '</div>';
+      });
+      if (html) container.innerHTML = html;
+
+      // Futures data
+      var futEl = document.getElementById('futures-data');
+      if (futEl) {
+        var wti = batch['CL=F'];
+        var brent = batch['BZ=F'];
+        if (wti && brent) {
+          var spread = brent.price - wti.price;
+          futEl.innerHTML = '<div class="sg-3">'
+            + '<div class="sc-box"><div class="v" style="color:var(--gold)">$' + wti.price.toFixed(2) + '</div><div class="l">WTI Front Month</div></div>'
+            + '<div class="sc-box"><div class="v" style="color:var(--accent)">$' + brent.price.toFixed(2) + '</div><div class="l">Brent Front Month</div></div>'
+            + '<div class="sc-box"><div class="v" style="font-size:18px">$' + spread.toFixed(2) + '</div><div class="l">Brent-WTI Spread</div></div>'
+            + '</div>'
+            + '<div class="sg" style="margin-top:8px">'
+            + '<div class="sc-box"><div class="v" style="font-size:16px;color:var(--gold)">Backwardation</div><div class="l">Curve Shape</div></div>'
+            + '<div class="sc-box"><div class="v" style="font-size:16px;color:var(--accent)">' + (spread > 0 ? 'Brent Premium' : 'WTI Premium') + '</div><div class="l">Spread State</div></div>'
+            + '</div>';
+        }
+      }
+
+      // Crack spreads
+      var crackEl = document.getElementById('crack-data');
+      var rb = batch['RB=F'], ho = batch['HO=F'], wti2 = batch['CL=F'];
+      if (crackEl && rb && ho && wti2) {
+        var gasBbl = rb.price * 42, hoBbl = ho.price * 42;
+        var crack321 = ((2 * gasBbl) + hoBbl) / 3 - wti2.price;
+        var gasCrack = gasBbl - wti2.price;
+        var distCrack = hoBbl - wti2.price;
+        var crackColor = crack321 > 25 ? 'var(--green)' : crack321 > 15 ? 'var(--gold)' : 'var(--accent)';
+        crackEl.innerHTML = '<div class="sg-3">'
+          + '<div class="sc-box"><div class="v" style="color:' + crackColor + '">$' + crack321.toFixed(2) + '</div><div class="l">3-2-1 Crack</div></div>'
+          + '<div class="sc-box"><div class="v" style="color:var(--green)">$' + gasCrack.toFixed(2) + '</div><div class="l">Gasoline Crack</div></div>'
+          + '<div class="sc-box"><div class="v" style="color:var(--gold)">$' + distCrack.toFixed(2) + '</div><div class="l">Distillate Crack</div></div>'
+          + '</div>'
+          + '<div class="note" style="margin-top:6px">RB: $' + rb.price.toFixed(4) + '/gal · HO: $' + ho.price.toFixed(4) + '/gal</div>'
+          + '<div class="callout callout-' + (crack321 > 20 ? 'green' : 'red') + '" style="margin-top:6px"><strong>' + (crack321 > 25 ? 'Strong margins' : crack321 > 15 ? 'Healthy margins' : 'Weak margins') + '.</strong> 3-2-1 at $' + crack321.toFixed(2) + '/bbl — ' + (crack321 > 20 ? 'refiners incentivized to process crude, supports demand' : 'refinery economics challenging, may cut runs') + '</div>';
+      }
+
+      // Cross-asset
+      var crossEl = document.getElementById('cross-asset');
+      if (crossEl) {
+        var assets = [
+          { sym: 'DX-Y.NYB', name: 'DXY', prefix: '' },
+          { sym: '^GSPC', name: 'S&P 500', prefix: '' },
+          { sym: '^VIX', name: 'VIX', prefix: '' },
+          { sym: '^TNX', name: 'US 10Y', prefix: '', suffix: '%' },
+          { sym: 'GC=F', name: 'Gold', prefix: '$' },
+          { sym: 'TTF=F', name: 'TTF Gas', prefix: '' },
+        ];
+        var crossHtml = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">';
+        assets.forEach(function(a) {
+          var q = batch[a.sym];
+          if (!q) return;
+          var chgC = q.change >= 0 ? 'var(--green)' : 'var(--accent)';
+          crossHtml += '<div class="sc-box"><div class="v" style="font-size:18px">' + (a.prefix || '') + q.price.toFixed(2) + (a.suffix || '') + '</div>'
+            + '<div class="l">' + a.name + ' <span style="color:' + chgC + '">' + (q.change >= 0 ? '+' : '') + q.changePct.toFixed(2) + '%</span></div></div>';
+        });
+        crossHtml += '</div>';
+        crossEl.innerHTML = crossHtml;
+      }
+
+      // Oil-DXY
+      var dxyEl = document.getElementById('oil-dxy');
+      if (dxyEl) {
+        var dxy = batch['DX-Y.NYB'], wti3 = batch['CL=F'];
+        if (dxy && wti3) {
+          var dxyDir = dxy.change < 0 ? 'Weakening' : 'Strengthening';
+          var impact = dxy.change < 0 ? 'Bullish tailwind for oil' : 'Bearish headwind for oil';
+          var impColor = dxy.change < 0 ? 'var(--green)' : 'var(--accent)';
+          dxyEl.innerHTML = '<div class="sg">'
+            + '<div class="sc-box"><div class="v" style="font-size:20px">' + dxy.price.toFixed(2) + '</div><div class="l">DXY · ' + dxyDir + '</div></div>'
+            + '<div class="sc-box"><div class="v" style="font-size:20px;color:var(--gold)">$' + wti3.price.toFixed(2) + '</div><div class="l">WTI</div></div>'
+            + '</div>'
+            + '<div class="note" style="margin-top:6px;color:' + impColor + '">' + impact + '</div>';
+        }
+      }
+    } catch (e) { /* keep placeholders */ }
+  }
+
+  // ── Options Chain ──
+  async function loadOptions() {
+    try {
+      var res = await fetchTimeout('/api/options', 12000);
+      if (!res.ok) throw new Error('api failed');
+      var data = await res.json();
+      if (!data.calls || data.calls.length === 0) throw new Error('no data');
+      var spot = data.spotPrice;
+
+      // Summary
+      var sumEl = document.getElementById('options-summary');
+      if (sumEl && data.summary) {
+        var s = data.summary;
+        sumEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">'
+          + '<div class="sc-box"><div class="v" style="font-size:18px;color:var(--gold)">' + s.avgCallIV + '%</div><div class="l">Avg Call IV</div></div>'
+          + '<div class="sc-box"><div class="v" style="font-size:18px;color:var(--accent)">' + s.avgPutIV + '%</div><div class="l">Avg Put IV</div></div>'
+          + '<div class="sc-box"><div class="v" style="font-size:18px">' + s.putCallRatio + '</div><div class="l">Put/Call Ratio</div></div>'
+          + '<div class="sc-box"><div class="v" style="font-size:18px;color:' + (s.skew > 0 ? 'var(--accent)' : 'var(--green)') + '">' + s.skew + '%</div><div class="l">Skew</div></div>'
+          + '</div>'
+          + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">'
+          + '<div class="sc-box"><div class="v" style="font-size:14px">' + s.totalCallVolume.toLocaleString() + '</div><div class="l">Call Volume</div></div>'
+          + '<div class="sc-box"><div class="v" style="font-size:14px">' + s.totalPutVolume.toLocaleString() + '</div><div class="l">Put Volume</div></div>'
+          + '<div class="sc-box"><div class="v" style="font-size:14px">' + s.totalCallOI.toLocaleString() + '</div><div class="l">Call Open Int</div></div>'
+          + '<div class="sc-box"><div class="v" style="font-size:14px">' + s.totalPutOI.toLocaleString() + '</div><div class="l">Put Open Int</div></div>'
+          + '</div>'
+          + '<div class="note" style="margin-top:8px">Expiry: ' + data.expiration + ' · Spot: $' + spot.toFixed(2) + '</div>';
+      }
+
+      // IV Skew chart
+      var skewEl = document.getElementById('iv-skew');
+      if (skewEl) {
+        var puts = data.puts.filter(function(p) { return !p.inTheMoney && p.impliedVolatility > 0 && p.strike >= spot * 0.75; });
+        var calls = data.calls.filter(function(c) { return !c.inTheMoney && c.impliedVolatility > 0 && c.strike <= spot * 1.35; });
+        var allS = [];
+        puts.forEach(function(p) { allS.push({ strike: p.strike, iv: p.impliedVolatility, type: 'put' }); });
+        calls.forEach(function(c) { allS.push({ strike: c.strike, iv: c.impliedVolatility, type: 'call' }); });
+        allS.sort(function(a, b) { return a.strike - b.strike; });
+
+        if (allS.length > 3) {
+          var W = 500, H = 140, pad = 35;
+          var cW = W - pad * 2, cH = H - 25;
+          var minS = allS[0].strike, maxS = allS[allS.length - 1].strike, sR = maxS - minS || 1;
+          var ivs = allS.map(function(s) { return s.iv; });
+          var minIV = Math.min.apply(null, ivs) * 0.9, maxIV = Math.max.apply(null, ivs) * 1.1, iR = maxIV - minIV || 0.01;
+          var pp = [], cp = [];
+          allS.forEach(function(s) {
+            var x = pad + ((s.strike - minS) / sR) * cW;
+            var y = 10 + cH - ((s.iv - minIV) / iR) * cH;
+            if (s.type === 'put') pp.push(x + ',' + y); else cp.push(x + ',' + y);
+          });
+          var spotX = pad + ((spot - minS) / sR) * cW;
+          var svg = '<svg viewBox="0 0 ' + W + ' ' + (H + 10) + '" width="100%" preserveAspectRatio="xMidYMid meet">';
+          svg += '<line x1="' + pad + '" y1="' + (10 + cH) + '" x2="' + (pad + cW) + '" y2="' + (10 + cH) + '" stroke="var(--border)" stroke-width="0.5"/>';
+          svg += '<line x1="' + spotX + '" y1="5" x2="' + spotX + '" y2="' + (10 + cH) + '" stroke="var(--gold)" stroke-width="1" stroke-dasharray="3,2" opacity="0.6"/>';
+          svg += '<text x="' + spotX + '" y="' + (H + 8) + '" fill="var(--gold)" font-size="7" font-family="IBM Plex Mono,monospace" text-anchor="middle">$' + spot.toFixed(0) + '</text>';
+          if (pp.length > 1) svg += '<polyline points="' + pp.join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="2" opacity="0.8"/>';
+          if (cp.length > 1) svg += '<polyline points="' + cp.join(' ') + '" fill="none" stroke="var(--green)" stroke-width="2" opacity="0.8"/>';
+          svg += '<text x="' + pad + '" y="8" fill="var(--muted)" font-size="7" font-family="IBM Plex Mono,monospace">' + (maxIV * 100).toFixed(0) + '%</text>';
+          svg += '<rect x="' + (W - 80) + '" y="2" width="8" height="3" fill="var(--accent)"/><text x="' + (W - 69) + '" y="6" fill="var(--accent)" font-size="7" font-family="IBM Plex Mono,monospace">Put IV</text>';
+          svg += '<rect x="' + (W - 80) + '" y="11" width="8" height="3" fill="var(--green)"/><text x="' + (W - 69) + '" y="15" fill="var(--green)" font-size="7" font-family="IBM Plex Mono,monospace">Call IV</text>';
+          svg += '</svg>';
+          var avgPutIV = puts.reduce(function(s, p) { return s + p.impliedVolatility; }, 0) / (puts.length || 1);
+          var avgCallIV = calls.reduce(function(s, c) { return s + c.impliedVolatility; }, 0) / (calls.length || 1);
+          svg += '<div style="display:flex;justify-content:space-between;font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--muted);margin-top:4px">';
+          svg += '<span>Avg Put IV: <strong style="color:var(--accent)">' + (avgPutIV * 100).toFixed(1) + '%</strong></span>';
+          svg += '<span>Avg Call IV: <strong style="color:var(--green)">' + (avgCallIV * 100).toFixed(1) + '%</strong></span>';
+          svg += '<span style="color:' + (avgPutIV > avgCallIV ? 'var(--accent)' : 'var(--green)') + '">' + (avgPutIV > avgCallIV ? 'Put skew (downside fear)' : 'Call skew (upside demand)') + '</span>';
+          svg += '</div>';
+          skewEl.innerHTML = svg;
+        }
+      }
+
+      // Calls table
+      var callsEl = document.getElementById('calls-table');
+      var otmCalls = data.calls.filter(function(c) { return !c.inTheMoney && c.strike <= spot * 1.3; }).slice(0, 12);
+      if (callsEl && otmCalls.length > 0) {
+        var h = '<table class="opt-table"><tr><th>Strike</th><th class="val">Bid</th><th class="val">Ask</th><th class="val">Last</th><th class="val">Vol</th><th class="val">OI</th><th class="val">IV</th></tr>';
+        otmCalls.forEach(function(c) {
+          var ivC = c.impliedVolatility > 0.5 ? 'var(--accent)' : c.impliedVolatility > 0.35 ? 'var(--gold)' : 'var(--green)';
+          h += '<tr><td class="strike">$' + c.strike.toFixed(0) + '</td><td class="val">$' + c.bid.toFixed(2) + '</td><td class="val">$' + c.ask.toFixed(2) + '</td><td class="val">$' + c.lastPrice.toFixed(2) + '</td><td class="val">' + c.volume + '</td><td class="val">' + c.openInterest.toLocaleString() + '</td><td class="val" style="color:' + ivC + '">' + (c.impliedVolatility * 100).toFixed(1) + '%</td></tr>';
+        });
+        h += '</table>';
+        callsEl.innerHTML = h;
+      }
+
+      // Puts table
+      var putsEl = document.getElementById('puts-table');
+      var otmPuts = data.puts.filter(function(p) { return !p.inTheMoney && p.strike >= spot * 0.75; }).slice(-12);
+      if (putsEl && otmPuts.length > 0) {
+        var h = '<table class="opt-table"><tr><th>Strike</th><th class="val">Bid</th><th class="val">Ask</th><th class="val">Last</th><th class="val">Vol</th><th class="val">OI</th><th class="val">IV</th></tr>';
+        otmPuts.forEach(function(p) {
+          h += '<tr><td class="strike">$' + p.strike.toFixed(0) + '</td><td class="val">$' + p.bid.toFixed(2) + '</td><td class="val">$' + p.ask.toFixed(2) + '</td><td class="val">$' + p.lastPrice.toFixed(2) + '</td><td class="val">' + p.volume + '</td><td class="val">' + p.openInterest.toLocaleString() + '</td><td class="val" style="color:var(--accent)">' + (p.impliedVolatility * 100).toFixed(1) + '%</td></tr>';
+        });
+        h += '</table>';
+        putsEl.innerHTML = h;
+      }
+    } catch (e) { /* keep placeholders */ }
+  }
+
+  // ── Price History Chart ──
+  async function loadPriceChart() {
+    var container = document.getElementById('price-chart');
+    if (!container) return;
+    try {
+      var res = await fetchTimeout('/api/history', 12000);
+      if (!res.ok) throw new Error('api failed');
+      var data = await res.json();
+      if (!data || data.length < 10) throw new Error('insufficient data');
+
+      var prices = data.map(function(d) { return d.close; });
+      var dates = data.map(function(d) { return d.date; });
+      var min = Math.min.apply(null, prices) * 0.95, max = Math.max.apply(null, prices) * 1.05, range = max - min || 1;
+      var W = 800, H = 280, P = 50, PR = 10, cW = W - P - PR, cH = H - 35;
+
+      var points = prices.map(function(p, i) { return (P + (i / (prices.length - 1)) * cW) + ',' + (10 + cH - ((p - min) / range) * cH); });
+      var svg = '<svg viewBox="0 0 ' + W + ' ' + (H + 15) + '" width="100%" preserveAspectRatio="xMidYMid meet">';
+      svg += '<defs><linearGradient id="ag2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f4a261" stop-opacity="0.25"/><stop offset="100%" stop-color="#f4a261" stop-opacity="0.02"/></linearGradient></defs>';
+      for (var g = 0; g <= 5; g++) {
+        var gy = 10 + (cH / 5) * g, gv = max - (range / 5) * g;
+        svg += '<line x1="' + P + '" y1="' + gy + '" x2="' + (P + cW) + '" y2="' + gy + '" stroke="var(--border)" stroke-width="0.5"/>';
+        svg += '<text x="' + (P - 4) + '" y="' + (gy + 3) + '" fill="var(--muted)" font-size="8" font-family="IBM Plex Mono,monospace" text-anchor="end">$' + gv.toFixed(0) + '</text>';
+      }
+      svg += '<polygon points="' + points.join(' ') + ' ' + (P + cW) + ',' + (10 + cH) + ' ' + P + ',' + (10 + cH) + '" fill="url(#ag2)"/>';
+      svg += '<polyline points="' + points.join(' ') + '" fill="none" stroke="#f4a261" stroke-width="2" opacity="0.9"/>';
+
+      var events = [
+        { date: '2025-04-01', label: 'OPEC+ cuts' }, { date: '2025-06-15', label: 'Iran talks fail' },
+        { date: '2025-09-19', label: 'Drone attack' }, { date: '2025-12-15', label: 'Fed cut' },
+        { date: '2026-01-15', label: 'Iran escalation' }, { date: '2026-02-20', label: 'Hormuz incidents' },
+        { date: '2026-03-05', label: 'US strikes' },
+      ];
+      var ls = 0;
+      events.forEach(function(ev) {
+        var idx = -1;
+        for (var j = 0; j < dates.length; j++) { if (dates[j] >= ev.date) { idx = j; break; } }
+        if (idx < 0) return;
+        var ex = P + (idx / (prices.length - 1)) * cW;
+        svg += '<line x1="' + ex + '" y1="8" x2="' + ex + '" y2="' + (10 + cH) + '" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.4"/>';
+        svg += '<text x="' + (ex + 2) + '" y="' + (ls % 2 === 0 ? 8 : 18) + '" fill="var(--accent)" font-size="7" font-family="IBM Plex Mono,monospace" opacity="0.7">' + ev.label + '</text>';
+        ls++;
+      });
+
+      var lastX = P + cW, lastY = 10 + cH - ((prices[prices.length - 1] - min) / range) * cH;
+      svg += '<circle cx="' + lastX + '" cy="' + lastY + '" r="4" fill="#f4a261" stroke="var(--bg)" stroke-width="2"/>';
+      svg += '<text x="' + (lastX - 4) + '" y="' + (lastY - 8) + '" fill="var(--white)" font-size="10" font-family="Bebas Neue,sans-serif" text-anchor="end">$' + prices[prices.length - 1].toFixed(2) + '</text>';
+
+      var prevMo = -1, moNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      dates.forEach(function(d, i) { var dt = new Date(d), m = dt.getMonth(); if (m !== prevMo) { prevMo = m; var mx = P + (i / (dates.length - 1)) * cW; svg += '<text x="' + mx + '" y="' + (H + 10) + '" fill="var(--muted)" font-size="7" font-family="IBM Plex Mono,monospace" text-anchor="middle">' + moNames[m] + (m === 0 ? ' ' + dt.getFullYear() : '') + '</text>'; } });
+      svg += '</svg>';
+
+      var first = prices[0], last = prices[prices.length - 1], chg = last - first, chgPct = (chg / first * 100).toFixed(1);
+      svg += '<div style="display:flex;gap:20px;justify-content:center;margin-top:8px;font-family:IBM Plex Mono,monospace;font-size:11px">';
+      svg += '<span>12M: <strong style="color:' + (chg >= 0 ? 'var(--green)' : 'var(--accent)') + '">' + (chg >= 0 ? '+' : '') + '$' + chg.toFixed(2) + ' (' + (chg >= 0 ? '+' : '') + chgPct + '%)</strong></span>';
+      svg += '<span>High: <strong style="color:var(--gold)">$' + Math.max.apply(null, prices).toFixed(2) + '</strong></span>';
+      svg += '<span>Low: <strong style="color:var(--teal)">$' + Math.min.apply(null, prices).toFixed(2) + '</strong></span>';
+      svg += '</div>';
+      container.innerHTML = svg;
+    } catch (e) { container.innerHTML = '<div class="note">Chart: ' + e.message + '</div>'; }
+  }
+
+  // ── Polymarket Prices ──
+  async function loadPolyPrices() {
+    try {
+      var res = await fetchTimeout('/api/polymarket', 12000);
+      if (!res.ok) return;
+      var data = await res.json();
+      var container = document.getElementById('poly-prices');
+      if (!container) return;
+
+      var oilEvent = data['will-crude-oil-cl-hit-by-end-of-march'] || data['cl-hit-jun-2026'];
+      if (!oilEvent || !oilEvent.markets) { container.innerHTML = '<div class="note">No Polymarket price data</div>'; return; }
+
+      var highs = oilEvent.markets.filter(function(m) { return m.question.includes('HIGH'); })
+        .map(function(m) { var match = m.question.match(/\$(\d+)/); var prob = JSON.parse(m.outcomePrices || '["0","0"]'); return { price: match ? parseInt(match[1]) : 0, prob: parseFloat(prob[0]), vol: parseFloat(m.volume || 0) }; })
+        .filter(function(m) { return m.price >= 90 && m.prob > 0; })
+        .sort(function(a,b) { return a.price - b.price; });
+
+      var html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">';
+      highs.forEach(function(h) {
+        var pct = Math.round(h.prob * 100);
+        var c = pct > 50 ? 'var(--green)' : pct > 20 ? 'var(--gold)' : 'var(--accent)';
+        var vol = h.vol > 1000000 ? '$' + (h.vol/1000000).toFixed(1) + 'M' : '$' + (h.vol/1000).toFixed(0) + 'K';
+        html += '<div class="sc-box" style="text-align:center">'
+          + '<div style="font-family:Bebas Neue,sans-serif;font-size:28px;color:' + c + ';line-height:1">' + pct + '%</div>'
+          + '<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--white);margin-top:2px">CL hits $' + h.price + '</div>'
+          + '<div style="font-family:IBM Plex Mono,monospace;font-size:7px;color:var(--muted);margin-top:1px">' + vol + ' volume</div>'
+          + '</div>';
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    } catch (e) { /* keep placeholder */ }
+  }
+
+  // ── Init ──
+  function init() {
+    updateUTC();
+    setInterval(updateUTC, 60000);
+
+    loadPrices();
+    setInterval(loadPrices, 60000);
+
+    setTimeout(loadOptions, 1500);
+    setInterval(loadOptions, 2 * 60000);
+
+    setTimeout(loadPriceChart, 2000);
+    setInterval(loadPriceChart, 60 * 60000);
+
+    setTimeout(loadPolyPrices, 2500);
+    setInterval(loadPolyPrices, 5 * 60000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
