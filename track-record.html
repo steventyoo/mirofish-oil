@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAGS OIL MONITOR — Track Record</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0b0f; --panel: #0d0f18; --border: #1b2133;
+  --accent: #e63946; --gold: #f4a261; --teal: #2a9d8f;
+  --blue: #457b9d; --purple: #6c5ce7; --text: #c8cdd8;
+  --muted: #5a6278; --white: #eef0f7; --green: #52b788;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  min-height: 100%; background: var(--bg);
+  font-family: 'IBM Plex Sans', sans-serif; color: var(--text);
+}
+::-webkit-scrollbar { width: 2px; }
+::-webkit-scrollbar-thumb { background: var(--border); }
+
+.header {
+  height: 68px; background: #080a12; border-bottom: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; flex-shrink: 0;
+}
+.breaking-badge {
+  background: var(--accent); color: #fff; font-weight: 700;
+  padding: 2px 10px; border-radius: 2px; margin-right: 14px;
+  font-size: 11px; letter-spacing: 2px; animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.main-title {
+  font-family: 'IBM Plex Mono', monospace; font-weight: 600;
+  font-size: 16px; color: var(--white); letter-spacing: 1px;
+}
+.main-title span { color: var(--accent); }
+.gold { color: var(--gold) !important; }
+.subtitle {
+  font-size: 10px; color: var(--muted); letter-spacing: 0.5px; margin-top: 2px;
+}
+.nav-links { display: flex; gap: 16px; align-items: center; }
+.nav-links a {
+  color: var(--muted); text-decoration: none; font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace; letter-spacing: 1px;
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 3px;
+  transition: all 0.2s;
+}
+.nav-links a:hover, .nav-links a.active {
+  color: var(--white); border-color: var(--accent); background: rgba(230,57,70,0.1);
+}
+
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+/* Stats cards */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px; margin-bottom: 32px;
+}
+.stat-card {
+  background: var(--panel); border: 1px solid var(--border);
+  padding: 20px; border-radius: 4px;
+}
+.stat-label {
+  font-size: 10px; color: var(--muted); letter-spacing: 1.5px;
+  font-family: 'IBM Plex Mono', monospace; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.stat-value {
+  font-family: 'Bebas Neue', sans-serif; font-size: 42px;
+  color: var(--white); line-height: 1;
+}
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--accent); }
+.stat-value.gold { color: var(--gold); }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* Signal table */
+.section-label {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  letter-spacing: 2px; color: var(--muted); border-bottom: 1px solid var(--border);
+  padding-bottom: 8px; margin-bottom: 16px; text-transform: uppercase;
+}
+.signal-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+.signal-table thead th {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+  letter-spacing: 1px; color: var(--muted); text-align: left;
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  text-transform: uppercase; position: sticky; top: 0;
+  background: var(--bg);
+}
+.signal-table tbody tr {
+  border-bottom: 1px solid rgba(27,33,51,0.5);
+  transition: background 0.15s;
+}
+.signal-table tbody tr:hover { background: rgba(27,33,51,0.8); }
+.signal-table td {
+  padding: 10px 12px; vertical-align: middle;
+}
+
+.dir-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 2px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; font-family: 'IBM Plex Mono', monospace;
+}
+.dir-badge.bullish { background: rgba(82,183,136,0.15); color: var(--green); border: 1px solid rgba(82,183,136,0.3); }
+.dir-badge.bearish { background: rgba(230,57,70,0.15); color: var(--accent); border: 1px solid rgba(230,57,70,0.3); }
+.dir-badge.neutral { background: rgba(69,123,157,0.15); color: var(--blue); border: 1px solid rgba(69,123,157,0.3); }
+
+.grade-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 2px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.grade-badge.correct { background: rgba(82,183,136,0.2); color: var(--green); }
+.grade-badge.wrong { background: rgba(230,57,70,0.2); color: var(--accent); }
+.grade-badge.flat { background: rgba(69,123,157,0.2); color: var(--blue); }
+.grade-badge.pending { background: rgba(90,98,120,0.2); color: var(--muted); }
+
+.pnl-pos { color: var(--green); font-weight: 600; }
+.pnl-neg { color: var(--accent); font-weight: 600; }
+.pnl-flat { color: var(--muted); }
+
+.expr-tag {
+  font-size: 10px; color: var(--gold); font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+.conf-bar {
+  width: 60px; height: 4px; background: var(--border); border-radius: 2px;
+  display: inline-block; vertical-align: middle; margin-left: 6px;
+}
+.conf-fill { height: 100%; border-radius: 2px; }
+
+.loading {
+  text-align: center; padding: 60px; color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+}
+
+.empty-state {
+  text-align: center; padding: 80px 20px; color: var(--muted);
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state .msg { font-size: 14px; margin-bottom: 8px; }
+.empty-state .sub { font-size: 12px; color: var(--muted); }
+
+/* Also store in localStorage */
+.local-note {
+  font-size: 10px; color: var(--muted); font-family: 'IBM Plex Mono', monospace;
+  text-align: center; padding: 12px; border-top: 1px solid var(--border);
+  margin-top: 24px;
+}
+
+.drivers-list {
+  font-size: 10px; color: var(--muted); max-width: 250px;
+  line-height: 1.5;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center">
+    <span class="breaking-badge">LIVE</span>
+    <div>
+      <div class="main-title">TAGS <span>OIL</span> MONITOR — <span class="gold">TRACK RECORD</span></div>
+      <div class="subtitle">Signal history · accuracy tracking · swarm performance grading</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="/">Dashboard</a>
+    <a href="/track-record.html" class="active">Track Record</a>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Stats -->
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card"><div class="stat-label">Total Signals</div><div class="stat-value" id="stat-total">—</div><div class="stat-sub">Since tracking began</div></div>
+    <div class="stat-card"><div class="stat-label">1-Day Accuracy</div><div class="stat-value" id="stat-acc-1d">—</div><div class="stat-sub" id="stat-acc-1d-sub">Direction correct after 24h</div></div>
+    <div class="stat-card"><div class="stat-label">1-Week Accuracy</div><div class="stat-value" id="stat-acc-1w">—</div><div class="stat-sub" id="stat-acc-1w-sub">Direction correct after 7d</div></div>
+    <div class="stat-card"><div class="stat-label">Avg 1D Move</div><div class="stat-value" id="stat-pnl-1d">—</div><div class="stat-sub">Average price change 24h later</div></div>
+    <div class="stat-card"><div class="stat-label">Avg 1W Move</div><div class="stat-value" id="stat-pnl-1w">—</div><div class="stat-sub">Average price change 7d later</div></div>
+    <div class="stat-card"><div class="stat-label">Bullish / Bearish</div><div class="stat-value" id="stat-ratio">—</div><div class="stat-sub">Signal direction breakdown</div></div>
+  </div>
+
+  <!-- Signal Log -->
+  <div class="section-label">Signal History</div>
+  <div id="signal-log" class="loading">Loading signal history...</div>
+
+  <div class="local-note">
+    Signals auto-logged on each swarm run. Resolution checked against live WTI prices at 1-day and 7-day intervals.
+    <br>Server storage: Vercel KV (persistent) or in-memory (resets on cold start). Client backup: localStorage.
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // Merge server signals with localStorage backup
+  function getLocalSignals() {
+    try {
+      return JSON.parse(localStorage.getItem('mirofish_signals') || '[]');
+    } catch(e) { return []; }
+  }
+
+  function saveLocalSignals(signals) {
+    try {
+      localStorage.setItem('mirofish_signals', JSON.stringify(signals.slice(0, 200)));
+    } catch(e) {}
+  }
+
+  function formatTime(ts) {
+    var d = new Date(ts);
+    var mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return mon[d.getMonth()] + ' ' + d.getDate() + ', ' +
+      String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function renderPnl(pnl) {
+    if (pnl === null || pnl === undefined) return '<span class="pnl-flat">—</span>';
+    var cls = pnl > 0.3 ? 'pnl-pos' : pnl < -0.3 ? 'pnl-neg' : 'pnl-flat';
+    var sign = pnl > 0 ? '+' : '';
+    return '<span class="' + cls + '">' + sign + pnl.toFixed(2) + '%</span>';
+  }
+
+  function renderGrade(grade) {
+    if (!grade) return '<span class="grade-badge pending">PENDING</span>';
+    return '<span class="grade-badge ' + grade + '">' + grade.toUpperCase() + '</span>';
+  }
+
+  async function loadTrackRecord() {
+    var container = document.getElementById('signal-log');
+    var localSignals = getLocalSignals();
+
+    try {
+      var res = await fetch('/api/signals');
+      var data = await res.json();
+      var serverSignals = data.signals || [];
+      var stats = data.stats || {};
+
+      // Merge: server is source of truth, local is backup
+      var merged = serverSignals.length > 0 ? serverSignals : localSignals;
+      if (serverSignals.length > 0) saveLocalSignals(serverSignals);
+
+      // Render stats
+      document.getElementById('stat-total').textContent = stats.total_signals || merged.length || '0';
+
+      if (stats.accuracy_1d !== null && stats.accuracy_1d !== undefined) {
+        var el1d = document.getElementById('stat-acc-1d');
+        el1d.textContent = stats.accuracy_1d + '%';
+        el1d.className = 'stat-value ' + (stats.accuracy_1d >= 60 ? 'green' : stats.accuracy_1d < 40 ? 'red' : 'gold');
+        document.getElementById('stat-acc-1d-sub').textContent = stats.resolved_1d + ' signals resolved';
+      }
+
+      if (stats.accuracy_1w !== null && stats.accuracy_1w !== undefined) {
+        var el1w = document.getElementById('stat-acc-1w');
+        el1w.textContent = stats.accuracy_1w + '%';
+        el1w.className = 'stat-value ' + (stats.accuracy_1w >= 60 ? 'green' : stats.accuracy_1w < 40 ? 'red' : 'gold');
+        document.getElementById('stat-acc-1w-sub').textContent = stats.resolved_1w + ' signals resolved';
+      }
+
+      if (stats.avg_pnl_1d !== null && stats.avg_pnl_1d !== undefined) {
+        var pnl1d = document.getElementById('stat-pnl-1d');
+        pnl1d.textContent = (stats.avg_pnl_1d > 0 ? '+' : '') + stats.avg_pnl_1d + '%';
+        pnl1d.className = 'stat-value ' + (stats.avg_pnl_1d > 0 ? 'green' : stats.avg_pnl_1d < 0 ? 'red' : '');
+      }
+
+      if (stats.avg_pnl_1w !== null && stats.avg_pnl_1w !== undefined) {
+        var pnl1w = document.getElementById('stat-pnl-1w');
+        pnl1w.textContent = (stats.avg_pnl_1w > 0 ? '+' : '') + stats.avg_pnl_1w + '%';
+        pnl1w.className = 'stat-value ' + (stats.avg_pnl_1w > 0 ? 'green' : stats.avg_pnl_1w < 0 ? 'red' : '');
+      }
+
+      var ratioEl = document.getElementById('stat-ratio');
+      ratioEl.innerHTML = '<span style="color:var(--green)">' + (stats.bullish_signals || 0) + '</span> / <span style="color:var(--accent)">' + (stats.bearish_signals || 0) + '</span>';
+
+      // Render table
+      if (merged.length === 0) {
+        container.innerHTML = '<div class="empty-state">'
+          + '<div class="icon">📊</div>'
+          + '<div class="msg">No signals logged yet</div>'
+          + '<div class="sub">The swarm auto-logs signals on each run (every 30 min). Check back soon.</div>'
+          + '</div>';
+        return;
+      }
+
+      var html = '<table class="signal-table"><thead><tr>'
+        + '<th>Time</th>'
+        + '<th>Direction</th>'
+        + '<th>Expression</th>'
+        + '<th>Confidence</th>'
+        + '<th>WTI Entry</th>'
+        + '<th>Brent Entry</th>'
+        + '<th>VIX</th>'
+        + '<th>1D P&L</th>'
+        + '<th>1D Grade</th>'
+        + '<th>1W P&L</th>'
+        + '<th>1W Grade</th>'
+        + '<th>Top Drivers</th>'
+        + '</tr></thead><tbody>';
+
+      merged.forEach(function(s) {
+        var expr = (s.expression || 'no_trade').replace(/_/g, ' ').toUpperCase();
+        var conf = s.avg_confidence || 0;
+        var confColor = conf >= 70 ? 'var(--green)' : conf >= 50 ? 'var(--gold)' : 'var(--accent)';
+        var drivers = (s.top_drivers || []).slice(0, 2).join('; ');
+
+        html += '<tr>'
+          + '<td style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--muted);white-space:nowrap">' + formatTime(s.timestamp) + '</td>'
+          + '<td><span class="dir-badge ' + (s.direction || 'neutral') + '">' + (s.direction || 'neutral') + '</span></td>'
+          + '<td><span class="expr-tag">' + expr + '</span></td>'
+          + '<td><span style="color:' + confColor + ';font-weight:600">' + conf + '%</span>'
+          + '<div class="conf-bar"><div class="conf-fill" style="width:' + conf + '%;background:' + confColor + '"></div></div></td>'
+          + '<td style="font-weight:600;color:var(--white)">$' + (s.wti_at_signal || 0).toFixed(2) + '</td>'
+          + '<td style="font-weight:600;color:var(--white)">$' + (s.brent_at_signal || 0).toFixed(2) + '</td>'
+          + '<td>' + (s.vix_at_signal || '—') + '</td>'
+          + '<td>' + renderPnl(s.pnl_1d) + '</td>'
+          + '<td>' + renderGrade(s.grade_1d) + '</td>'
+          + '<td>' + renderPnl(s.pnl_1w) + '</td>'
+          + '<td>' + renderGrade(s.grade_1w) + '</td>'
+          + '<td><div class="drivers-list">' + (drivers || '—') + '</div></td>'
+          + '</tr>';
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+
+    } catch(e) {
+      // Fall back to localStorage
+      if (localSignals.length > 0) {
+        container.innerHTML = '<div class="empty-state"><div class="msg">Server unavailable — showing ' + localSignals.length + ' cached signals</div></div>';
+      } else {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📊</div><div class="msg">No signals logged yet</div><div class="sub">The swarm auto-logs signals on each run. Check back after the first swarm cycle.</div></div>';
+      }
+    }
+  }
+
+  loadTrackRecord();
+  // Refresh every 5 minutes
+  setInterval(loadTrackRecord, 5 * 60000);
+})();
+</script>
+</body>
+</html>

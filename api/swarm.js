@@ -321,12 +321,40 @@ export default async function handler(req, res) {
     // Compute consensus
     const consensus = computeConsensus(agentOutputs);
 
-    res.status(200).json({
+    const result = {
       timestamp: new Date().toISOString(),
       world_state: worldState,
       agents: agentOutputs,
       consensus,
-    });
+    };
+
+    // Auto-log signal for track record (fire and forget)
+    if (consensus && consensus.top_expression !== 'no_trade') {
+      try {
+        const baseUrl = `https://${process.env.VERCEL_URL || 'mirofish-oil.vercel.app'}`;
+        fetch(`${baseUrl}/api/signals`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            timestamp: result.timestamp,
+            direction: consensus.bullish_prob > consensus.bearish_prob ? 'bullish' : consensus.bearish_prob > consensus.bullish_prob ? 'bearish' : 'neutral',
+            expression: consensus.top_expression,
+            bullish_prob: consensus.bullish_prob,
+            bearish_prob: consensus.bearish_prob,
+            avg_confidence: consensus.avg_confidence,
+            disagreement: consensus.disagreement_score,
+            agent_count: consensus.agent_count,
+            top_drivers: consensus.top_drivers,
+            wti_at_signal: worldState.prices?.wti?.price || 0,
+            brent_at_signal: worldState.prices?.brent?.price || 0,
+            vix_at_signal: worldState.macro?.vix || 0,
+            regime: 'event_risk',
+          }),
+        }).catch(() => {}); // Don't block on logging failure
+      } catch (e) { /* ignore */ }
+    }
+
+    res.status(200).json(result);
   } catch (e) {
     res.status(500).json({ error: e.message, agents: [], consensus: null });
   }
