@@ -24,6 +24,20 @@ const FUNDAMENTALS = {
   AXON: { name: 'Axon Enterprise', sector: 'drone', marketCap: 55e9, pe: 110, forwardPE: 75, ps: 26.0, evEbitda: 85, revenue: 2.1e9, ebitda: 0.45e9, profitMargin: 0.15, roe: 0.15, revenueGrowth: 0.32, dividendYield: null, beta: 1.20, fiftyTwoWeekHigh: 700, fiftyTwoWeekLow: 250, note: 'Drone-as-first-responder, Dedrone C-UAS' },
   LDOS: { name: 'Leidos Holdings', sector: 'drone', marketCap: 20e9, pe: 20.0, forwardPE: 16.5, ps: 1.26, evEbitda: 12.5, revenue: 16.1e9, ebitda: 1.9e9, profitMargin: 0.07, roe: 0.30, revenueGrowth: 0.06, dividendYield: 0.011, beta: 0.72, fiftyTwoWeekHigh: 178, fiftyTwoWeekLow: 120, note: 'Drone C2 systems, DoD IT' },
 
+  // ═══ PURE DRONE STOCKS ═══
+  RCAT: { name: 'Red Cat Holdings', sector: 'puredrone', marketCap: 0.8e9, pe: null, forwardPE: null, ps: 80.0, evEbitda: null, revenue: 0.01e9, ebitda: -0.02e9, profitMargin: -2.5, roe: null, revenueGrowth: 1.5, dividendYield: null, beta: 2.8, fiftyTwoWeekHigh: 15, fiftyTwoWeekLow: 1.5, note: 'Teal 2 FPV drone, DoD small UAS' },
+  ONDS: { name: 'Ondas Holdings', sector: 'puredrone', marketCap: 0.12e9, pe: null, forwardPE: null, ps: 15.0, evEbitda: null, revenue: 0.015e9, ebitda: -0.03e9, profitMargin: -3.0, roe: null, revenueGrowth: 0.8, dividendYield: null, beta: 2.5, fiftyTwoWeekHigh: 4.5, fiftyTwoWeekLow: 0.5, note: 'Airobotics autonomous drones, BVLOS' },
+  DPRO: { name: 'Draganfly', sector: 'puredrone', marketCap: 0.04e9, pe: null, forwardPE: null, ps: 8.0, evEbitda: null, revenue: 0.005e9, ebitda: -0.01e9, profitMargin: -2.0, roe: null, revenueGrowth: 0.35, dividendYield: null, beta: 2.2, fiftyTwoWeekHigh: 3.5, fiftyTwoWeekLow: 0.3, note: 'Military/public safety drones, Canada' },
+
+  // ═══ DRONE + SPACE / DEFENSE HYBRIDS ═══
+  RDW:  { name: 'Redwire Corporation', sector: 'space', marketCap: 2.8e9, pe: null, forwardPE: null, ps: 8.5, evEbitda: null, revenue: 0.32e9, ebitda: -0.01e9, profitMargin: -0.03, roe: null, revenueGrowth: 0.45, dividendYield: null, beta: 2.0, fiftyTwoWeekHigh: 30, fiftyTwoWeekLow: 3, note: 'Space ISR, satellite sensors, in-orbit servicing' },
+
+  // ═══ SENSOR / ISR / SYSTEM LAYER ═══
+  ESLT: { name: 'Elbit Systems', sector: 'sensor', marketCap: 12e9, pe: 32.0, forwardPE: 25.0, ps: 1.85, evEbitda: 18.0, revenue: 6.5e9, ebitda: 0.75e9, profitMargin: 0.06, roe: 0.12, revenueGrowth: 0.12, dividendYield: 0.009, beta: 0.65, fiftyTwoWeekHigh: 310, fiftyTwoWeekLow: 185, note: 'Hermes drones, EW, battle mgmt — Israel' },
+
+  // ═══ C-UAS / COUNTER-DRONE ═══
+  AAON: { name: 'Anduril (Private)', sector: 'cuas', marketCap: 28e9, pe: null, forwardPE: null, ps: null, evEbitda: null, revenue: 0.8e9, ebitda: null, profitMargin: null, roe: null, revenueGrowth: 1.0, dividendYield: null, beta: null, fiftyTwoWeekHigh: null, fiftyTwoWeekLow: null, note: 'PRIVATE — Lattice AI, Altius drone, C-UAS' },
+
   // ═══ ENERGY MAJORS ═══
   XOM:  { name: 'Exxon Mobil', sector: 'energy', marketCap: 465e9, pe: 14.2, forwardPE: 13.5, ps: 1.30, evEbitda: 6.5, revenue: 340e9, ebitda: 62e9, profitMargin: 0.098, roe: 0.18, revenueGrowth: -0.02, dividendYield: 0.034, beta: 0.80, fiftyTwoWeekHigh: 126, fiftyTwoWeekLow: 95, note: 'Largest US oil major' },
   CVX:  { name: 'Chevron', sector: 'energy', marketCap: 280e9, pe: 15.5, forwardPE: 13.8, ps: 1.38, evEbitda: 6.8, revenue: 196e9, ebitda: 45e9, profitMargin: 0.098, roe: 0.13, revenueGrowth: -0.04, dividendYield: 0.042, beta: 0.85, fiftyTwoWeekHigh: 167, fiftyTwoWeekLow: 135, note: 'Integrated major, Permian + Guyana' },
@@ -64,12 +78,14 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
 
   try {
-    const allSymbols = Object.keys(FUNDAMENTALS);
-    const results = { defense: [], drone: [], energy: [], etfs: [] };
+    // Filter out private companies (no ticker to fetch)
+    const allSymbols = Object.keys(FUNDAMENTALS).filter(s => s !== 'AAON');
+    const results = { defense: [], drone: [], puredrone: [], space: [], sensor: [], cuas: [], energy: [], etfs: [] };
 
     // Fetch live prices in parallel
+    const tickerMap = { FLIR: 'TDY' };
     const priceFetches = await Promise.allSettled(
-      allSymbols.map(sym => fetchPrice(sym === 'FLIR' ? 'TDY' : sym))
+      allSymbols.map(sym => fetchPrice(tickerMap[sym] || sym))
     );
 
     allSymbols.forEach((sym, i) => {
@@ -77,24 +93,28 @@ export default async function handler(req, res) {
       const livePrice = priceFetches[i].status === 'fulfilled' ? priceFetches[i].value : null;
 
       const entry = {
-        symbol: sym === 'FLIR' ? 'TDY' : sym,
+        symbol: tickerMap[sym] || sym,
         ...fund,
-        // Override with live price if available
         price: livePrice?.price || 0,
         change: livePrice?.change || 0,
         changePct: livePrice?.changePct || 0,
       };
 
-      if (fund.sector === 'defense') results.defense.push(entry);
-      else if (fund.sector === 'drone') results.drone.push(entry);
-      else if (fund.sector === 'energy') results.energy.push(entry);
-      else results.etfs.push(entry);
+      const sector = fund.sector;
+      if (results[sector]) results[sector].push(entry);
+      else if (sector === 'etf') results.etfs.push(entry);
+      else results.defense.push(entry);
     });
 
-    // Sort by market cap
-    results.defense.sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0));
-    results.drone.sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0));
-    results.energy.sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0));
+    // Add private companies (no live price)
+    if (FUNDAMENTALS.AAON) {
+      results.cuas.push({ symbol: 'ANDURIL', ...FUNDAMENTALS.AAON, price: 0, change: 0, changePct: 0, isPrivate: true });
+    }
+
+    // Sort each group by market cap
+    Object.keys(results).forEach(k => {
+      results[k].sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0));
+    });
 
     res.status(200).json(results);
   } catch (e) {

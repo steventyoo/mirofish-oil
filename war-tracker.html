@@ -321,8 +321,28 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
 </div>
 
 <div class="card" style="margin-bottom:16px;overflow-x:auto">
-  <div class="card-title"><span class="live"></span> Drone & Drone Sensor Stocks — War Tech Beneficiaries</div>
+  <div class="card-title"><span class="live"></span> Drone & Drone Sensor Stocks — Large Cap War Tech</div>
   <div id="drone-table"><div class="note">Loading drone fundamentals...</div></div>
+</div>
+
+<div class="card" style="margin-bottom:16px;overflow-x:auto">
+  <div class="card-title"><span class="live"></span> 🔥 Pure Drone Stocks — Direct Drone Exposure (Small Cap, High Vol)</div>
+  <div id="puredrone-table"><div class="note">Loading pure drone stocks...</div></div>
+</div>
+
+<div class="card" style="margin-bottom:16px;overflow-x:auto">
+  <div class="card-title"><span class="live"></span> 🚀 Drone + Space / Defense Hybrids — ISR + Satellite</div>
+  <div id="space-table"><div class="note">Loading space/hybrid stocks...</div></div>
+</div>
+
+<div class="card" style="margin-bottom:16px;overflow-x:auto">
+  <div class="card-title"><span class="live"></span> 🎯 Sensor / ISR / System Layer — Where The Real Money Is</div>
+  <div id="sensor-table"><div class="note">Loading sensor stocks...</div></div>
+</div>
+
+<div class="card" style="margin-bottom:16px;overflow-x:auto">
+  <div class="card-title"><span class="live"></span> 🛡 Counter-UAS (C-UAS) — Anti-Drone Defense</div>
+  <div id="cuas-table"><div class="note">Loading C-UAS stocks...</div></div>
 </div>
 
 <div class="card" style="margin-bottom:16px;overflow-x:auto">
@@ -533,21 +553,28 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
       if (!res.ok) throw new Error('api failed');
       var data = await res.json();
 
-      var defEl = document.getElementById('defense-table');
-      var droEl = document.getElementById('drone-table');
-      var eneEl = document.getElementById('energy-table');
-      var etfEl = document.getElementById('etf-table');
-
-      if (defEl && data.defense) defEl.innerHTML = buildTable(data.defense);
-      if (droEl && data.drone) droEl.innerHTML = buildTable(data.drone);
-      if (eneEl && data.energy) eneEl.innerHTML = buildTable(data.energy);
-      if (etfEl && data.etfs) etfEl.innerHTML = buildTable(data.etfs);
+      var sections = {
+        'defense-table': data.defense,
+        'drone-table': data.drone,
+        'puredrone-table': data.puredrone,
+        'space-table': data.space,
+        'sensor-table': data.sensor,
+        'cuas-table': data.cuas,
+        'energy-table': data.energy,
+        'etf-table': data.etfs,
+      };
+      Object.keys(sections).forEach(function(id) {
+        var el = document.getElementById(id);
+        var arr = sections[id];
+        if (el && arr && arr.length > 0) el.innerHTML = buildTable(arr);
+        else if (el && (!arr || arr.length === 0)) el.innerHTML = '<div class="note">No data for this category</div>';
+      });
     } catch (e) {
       var msg = '<div class="note">Fundamentals: ' + e.message + '</div>';
-      var defEl = document.getElementById('defense-table');
-      var eneEl = document.getElementById('energy-table');
-      if (defEl) defEl.innerHTML = msg;
-      if (eneEl) eneEl.innerHTML = msg;
+      ['defense-table','drone-table','puredrone-table','space-table','sensor-table','cuas-table','energy-table','etf-table'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.innerHTML = msg;
+      });
     }
   }
 
