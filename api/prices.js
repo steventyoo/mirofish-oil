@@ -50,6 +50,37 @@ export default async function handler(req, res) {
         if (quote) results[sym] = quote;
       })
     );
+
+    // Synthesize Dubai crude estimate from Brent
+    // Dubai normally trades at Brent -$1 to -$3.
+    // During Hormuz disruption, Dubai premium can flip to Brent +$5 to +$20
+    // because it's the physical Gulf benchmark and supply is directly threatened.
+    // We estimate based on current Brent-WTI spread as a proxy for Gulf stress.
+    if (results['BZ=F'] && results['CL=F']) {
+      const brent = results['BZ=F'].price;
+      const wti = results['CL=F'].price;
+      const brentWtiSpread = brent - wti;
+      // In normal markets (spread <$5): Dubai = Brent - $1.50
+      // In stressed markets (spread >$5): Dubai premium increases
+      // Spread >$8 = significant Gulf stress, Dubai approaches or exceeds Brent
+      let dubaiDiff;
+      if (brentWtiSpread > 10) dubaiDiff = 2.0;  // Extreme stress: Dubai > Brent
+      else if (brentWtiSpread > 8) dubaiDiff = 0.5;
+      else if (brentWtiSpread > 5) dubaiDiff = -0.5;
+      else dubaiDiff = -1.50;  // Normal
+      const dubaiPrice = Math.round((brent + dubaiDiff) * 100) / 100;
+      const dubaiPrev = Math.round((brent - results['BZ=F'].change + dubaiDiff) * 100) / 100;
+      results['DUBAI'] = {
+        price: dubaiPrice,
+        change: Math.round((dubaiPrice - dubaiPrev) * 100) / 100,
+        changePct: results['BZ=F'].changePct, // Tracks Brent %
+        currency: 'USD',
+        synthetic: true,
+        note: 'Estimated from Brent + Gulf stress differential',
+        brentDiff: dubaiDiff,
+      };
+    }
+
     res.status(200).json(results);
   } catch (e) {
     res.status(500).json({ error: e.message });

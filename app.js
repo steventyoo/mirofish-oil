@@ -749,9 +749,14 @@
       const spread = brent.price - wti.price;
       const curveState = spread > 0 ? 'Brent Premium' : 'WTI Premium';
 
-      var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
+      const dubai = batch['DUBAI'];
+
+      var html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">';
       html += '<div class="sc"><div class="v" style="font-size:20px;color:var(--gold)">$' + wti.price.toFixed(2) + '</div><div class="l">WTI Front Month</div></div>';
       html += '<div class="sc"><div class="v" style="font-size:20px;color:var(--accent)">$' + brent.price.toFixed(2) + '</div><div class="l">Brent Front Month</div></div>';
+      if (dubai) {
+        html += '<div class="sc" style="border:1px solid var(--accent)"><div class="v" style="font-size:20px;color:var(--accent)">$' + dubai.price.toFixed(2) + '</div><div class="l">Dubai Crude (est.) <span style="font-size:7px;color:var(--muted)">' + (dubai.brentDiff >= 0 ? 'Brent+$' + dubai.brentDiff.toFixed(1) : 'Brent$' + dubai.brentDiff.toFixed(1)) + '</span></div></div>';
+      }
       html += '</div>';
 
       html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">';
