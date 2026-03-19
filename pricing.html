@@ -75,6 +75,13 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
 .bar-val { color: var(--gold); font-size: 10px; }
 .bar-bg { height: 4px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
 .bar-fg { height: 4px; border-radius: 2px; }
+
+.range-btn { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1.5px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 4px 14px; border-radius: 3px; cursor: pointer; transition: all .15s; }
+.range-btn:hover { color: var(--white); border-color: var(--muted); background: rgba(255,255,255,.03); }
+.range-btn.active { color: var(--white); border-color: var(--accent); background: rgba(230,57,70,.1); }
+
+.crosshair-line { position: absolute; top: 0; width: 1px; background: rgba(244,162,97,.4); pointer-events: none; z-index: 10; }
+.crosshair-dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); border: 2px solid var(--bg); pointer-events: none; z-index: 11; transform: translate(-50%, -50%); }
 </style>
 </head>
 <body>
@@ -108,11 +115,27 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
 
 <div class="grid-5" id="live-prices"><div class="note">Loading prices...</div></div>
 
-<!-- ═══════ 12-MONTH CHART ═══════ -->
-<div class="section-header"><span class="sh-icon">📈</span> WTI 12-Month Price History <span class="sh-sub">YAHOO FINANCE · LIVE</span></div>
+<!-- ═══════ INTERACTIVE CHART ═══════ -->
+<div class="section-header"><span class="sh-icon">📈</span> WTI Price History <span class="sh-sub">YAHOO FINANCE · LIVE</span></div>
 
-<div class="card" style="margin-bottom:20px">
-  <div id="price-chart"><div class="note">Loading 12-month price history...</div></div>
+<div class="card" style="margin-bottom:20px;position:relative">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div id="chart-range-btns" style="display:flex;gap:4px">
+      <button class="range-btn" data-range="1mo">1M</button>
+      <button class="range-btn" data-range="3mo">3M</button>
+      <button class="range-btn" data-range="6mo">6M</button>
+      <button class="range-btn active" data-range="1y">1Y</button>
+      <button class="range-btn" data-range="3y">3Y</button>
+      <button class="range-btn" data-range="5y">5Y</button>
+      <button class="range-btn" data-range="max">MAX</button>
+    </div>
+    <div id="chart-tooltip" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--white);text-align:right;min-width:200px;opacity:0;transition:opacity .15s">
+      <span id="tt-date" style="color:var(--muted)"></span>
+      <span id="tt-price" style="font-family:'Bebas Neue',sans-serif;font-size:22px;margin-left:8px"></span>
+      <span id="tt-change" style="font-size:10px;margin-left:6px"></span>
+    </div>
+  </div>
+  <div id="price-chart" style="position:relative;cursor:crosshair"><div class="note">Loading price history...</div></div>
 </div>
 
 <!-- ═══════ FUTURES TERM STRUCTURE ═══════ -->
@@ -418,65 +441,226 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
     } catch (e) { /* keep placeholders */ }
   }
 
-  // ── Price History Chart ──
-  async function loadPriceChart() {
+  // ── Interactive Price Chart ──
+  var chartData = null;
+  var currentRange = '1y';
+
+  var EVENTS = [
+    { date: '2021-01-01', label: 'Post-COVID recovery' },
+    { date: '2022-02-24', label: 'Russia invades Ukraine' },
+    { date: '2022-06-08', label: 'Oil peaks $120+' },
+    { date: '2023-10-07', label: 'Hamas attack' },
+    { date: '2024-01-15', label: 'Houthi Red Sea attacks' },
+    { date: '2024-09-01', label: 'OPEC+ cuts extended' },
+    { date: '2025-04-01', label: 'OPEC+ cuts' },
+    { date: '2025-06-15', label: 'Iran talks fail' },
+    { date: '2025-09-19', label: 'Drone attack' },
+    { date: '2025-12-15', label: 'Fed cut' },
+    { date: '2026-01-15', label: 'Iran escalation' },
+    { date: '2026-02-20', label: 'Hormuz incidents' },
+    { date: '2026-03-05', label: 'US strikes' },
+  ];
+
+  async function loadPriceChart(range) {
+    range = range || currentRange;
+    currentRange = range;
     var container = document.getElementById('price-chart');
     if (!container) return;
+
+    // Update active button
+    document.querySelectorAll('.range-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.range === range);
+    });
+
     try {
-      var res = await fetchTimeout('/api/history', 12000);
+      var res = await fetchTimeout('/api/history?range=' + range, 12000);
       if (!res.ok) throw new Error('api failed');
       var data = await res.json();
-      if (!data || data.length < 10) throw new Error('insufficient data');
+      if (!data || data.length < 5) throw new Error('insufficient data');
+      chartData = data;
 
       var prices = data.map(function(d) { return d.close; });
       var dates = data.map(function(d) { return d.date; });
-      var min = Math.min.apply(null, prices) * 0.95, max = Math.max.apply(null, prices) * 1.05, range = max - min || 1;
-      var W = 800, H = 280, P = 50, PR = 10, cW = W - P - PR, cH = H - 35;
+      var min = Math.min.apply(null, prices) * 0.97;
+      var max = Math.max.apply(null, prices) * 1.03;
+      var rng = max - min || 1;
+      var W = 900, H = 320, P = 55, PR = 15, cW = W - P - PR, cH = H - 40;
 
-      var points = prices.map(function(p, i) { return (P + (i / (prices.length - 1)) * cW) + ',' + (10 + cH - ((p - min) / range) * cH); });
-      var svg = '<svg viewBox="0 0 ' + W + ' ' + (H + 15) + '" width="100%" preserveAspectRatio="xMidYMid meet">';
-      svg += '<defs><linearGradient id="ag2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f4a261" stop-opacity="0.25"/><stop offset="100%" stop-color="#f4a261" stop-opacity="0.02"/></linearGradient></defs>';
-      for (var g = 0; g <= 5; g++) {
-        var gy = 10 + (cH / 5) * g, gv = max - (range / 5) * g;
+      var points = prices.map(function(p, i) {
+        return (P + (i / (prices.length - 1)) * cW) + ',' + (15 + cH - ((p - min) / rng) * cH);
+      });
+
+      var svg = '<svg id="chart-svg" viewBox="0 0 ' + W + ' ' + (H + 20) + '" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block">';
+
+      // Gradient
+      svg += '<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">';
+      svg += '<stop offset="0%" stop-color="#f4a261" stop-opacity="0.3"/>';
+      svg += '<stop offset="100%" stop-color="#f4a261" stop-opacity="0.02"/>';
+      svg += '</linearGradient></defs>';
+
+      // Grid lines
+      for (var g = 0; g <= 6; g++) {
+        var gy = 15 + (cH / 6) * g;
+        var gv = max - (rng / 6) * g;
         svg += '<line x1="' + P + '" y1="' + gy + '" x2="' + (P + cW) + '" y2="' + gy + '" stroke="var(--border)" stroke-width="0.5"/>';
-        svg += '<text x="' + (P - 4) + '" y="' + (gy + 3) + '" fill="var(--muted)" font-size="8" font-family="IBM Plex Mono,monospace" text-anchor="end">$' + gv.toFixed(0) + '</text>';
+        svg += '<text x="' + (P - 5) + '" y="' + (gy + 3) + '" fill="var(--muted)" font-size="9" font-family="IBM Plex Mono,monospace" text-anchor="end">$' + gv.toFixed(0) + '</text>';
       }
-      svg += '<polygon points="' + points.join(' ') + ' ' + (P + cW) + ',' + (10 + cH) + ' ' + P + ',' + (10 + cH) + '" fill="url(#ag2)"/>';
-      svg += '<polyline points="' + points.join(' ') + '" fill="none" stroke="#f4a261" stroke-width="2" opacity="0.9"/>';
 
-      var events = [
-        { date: '2025-04-01', label: 'OPEC+ cuts' }, { date: '2025-06-15', label: 'Iran talks fail' },
-        { date: '2025-09-19', label: 'Drone attack' }, { date: '2025-12-15', label: 'Fed cut' },
-        { date: '2026-01-15', label: 'Iran escalation' }, { date: '2026-02-20', label: 'Hormuz incidents' },
-        { date: '2026-03-05', label: 'US strikes' },
-      ];
-      var ls = 0;
-      events.forEach(function(ev) {
+      // Area fill
+      svg += '<polygon points="' + points.join(' ') + ' ' + (P + cW) + ',' + (15 + cH) + ' ' + P + ',' + (15 + cH) + '" fill="url(#cg)"/>';
+
+      // Price line
+      svg += '<polyline points="' + points.join(' ') + '" fill="none" stroke="#f4a261" stroke-width="2.5" stroke-linejoin="round" opacity="0.95"/>';
+
+      // Event annotations (only show events within date range)
+      var evIdx = 0;
+      EVENTS.forEach(function(ev) {
+        if (ev.date < dates[0] || ev.date > dates[dates.length - 1]) return;
         var idx = -1;
         for (var j = 0; j < dates.length; j++) { if (dates[j] >= ev.date) { idx = j; break; } }
         if (idx < 0) return;
         var ex = P + (idx / (prices.length - 1)) * cW;
-        svg += '<line x1="' + ex + '" y1="8" x2="' + ex + '" y2="' + (10 + cH) + '" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.4"/>';
-        svg += '<text x="' + (ex + 2) + '" y="' + (ls % 2 === 0 ? 8 : 18) + '" fill="var(--accent)" font-size="7" font-family="IBM Plex Mono,monospace" opacity="0.7">' + ev.label + '</text>';
-        ls++;
+        svg += '<line x1="' + ex + '" y1="10" x2="' + ex + '" y2="' + (15 + cH) + '" stroke="var(--accent)" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.35"/>';
+        var ly = evIdx % 3 === 0 ? 10 : evIdx % 3 === 1 ? 22 : 34;
+        svg += '<text x="' + (ex + 3) + '" y="' + ly + '" fill="var(--accent)" font-size="7" font-family="IBM Plex Mono,monospace" opacity="0.65">' + ev.label + '</text>';
+        evIdx++;
       });
 
-      var lastX = P + cW, lastY = 10 + cH - ((prices[prices.length - 1] - min) / range) * cH;
-      svg += '<circle cx="' + lastX + '" cy="' + lastY + '" r="4" fill="#f4a261" stroke="var(--bg)" stroke-width="2"/>';
-      svg += '<text x="' + (lastX - 4) + '" y="' + (lastY - 8) + '" fill="var(--white)" font-size="10" font-family="Bebas Neue,sans-serif" text-anchor="end">$' + prices[prices.length - 1].toFixed(2) + '</text>';
+      // Current price marker
+      var lastX = P + cW;
+      var lastY = 15 + cH - ((prices[prices.length - 1] - min) / rng) * cH;
+      svg += '<circle cx="' + lastX + '" cy="' + lastY + '" r="5" fill="#f4a261" stroke="var(--bg)" stroke-width="2.5"/>';
+      svg += '<text x="' + (lastX - 5) + '" y="' + (lastY - 10) + '" fill="var(--white)" font-size="12" font-family="Bebas Neue,sans-serif" text-anchor="end">$' + prices[prices.length - 1].toFixed(2) + '</text>';
 
-      var prevMo = -1, moNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      dates.forEach(function(d, i) { var dt = new Date(d), m = dt.getMonth(); if (m !== prevMo) { prevMo = m; var mx = P + (i / (dates.length - 1)) * cW; svg += '<text x="' + mx + '" y="' + (H + 10) + '" fill="var(--muted)" font-size="7" font-family="IBM Plex Mono,monospace" text-anchor="middle">' + moNames[m] + (m === 0 ? ' ' + dt.getFullYear() : '') + '</text>'; } });
+      // Horizontal price line for current
+      svg += '<line x1="' + P + '" y1="' + lastY + '" x2="' + (P + cW) + '" y2="' + lastY + '" stroke="#f4a261" stroke-width="0.5" stroke-dasharray="2,4" opacity="0.3"/>';
+
+      // Date labels on x-axis
+      var prevLabel = '';
+      var moNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var labelInterval = Math.max(1, Math.floor(dates.length / 12));
+      dates.forEach(function(d, i) {
+        if (i % labelInterval !== 0 && i !== dates.length - 1) return;
+        var dt = new Date(d);
+        var label = moNames[dt.getMonth()];
+        if (['3y','5y','max'].indexOf(range) >= 0) label = moNames[dt.getMonth()] + ' ' + String(dt.getFullYear()).slice(2);
+        else if (dt.getMonth() === 0) label = 'Jan ' + dt.getFullYear();
+        if (label === prevLabel) return;
+        prevLabel = label;
+        var mx = P + (i / (dates.length - 1)) * cW;
+        svg += '<text x="' + mx + '" y="' + (H + 14) + '" fill="var(--muted)" font-size="8" font-family="IBM Plex Mono,monospace" text-anchor="middle">' + label + '</text>';
+      });
+
+      // Invisible overlay for mouse tracking
+      svg += '<rect id="chart-overlay" x="' + P + '" y="15" width="' + cW + '" height="' + cH + '" fill="transparent" style="cursor:crosshair"/>';
+
       svg += '</svg>';
 
-      var first = prices[0], last = prices[prices.length - 1], chg = last - first, chgPct = (chg / first * 100).toFixed(1);
-      svg += '<div style="display:flex;gap:20px;justify-content:center;margin-top:8px;font-family:IBM Plex Mono,monospace;font-size:11px">';
-      svg += '<span>12M: <strong style="color:' + (chg >= 0 ? 'var(--green)' : 'var(--accent)') + '">' + (chg >= 0 ? '+' : '') + '$' + chg.toFixed(2) + ' (' + (chg >= 0 ? '+' : '') + chgPct + '%)</strong></span>';
+      // Crosshair elements
+      svg += '<div id="chart-crosshair" class="crosshair-line" style="display:none;height:' + cH + 'px;top:15px"></div>';
+      svg += '<div id="chart-dot" class="crosshair-dot" style="display:none"></div>';
+
+      // Stats bar
+      var first = prices[0], last = prices[prices.length - 1];
+      var chg = last - first, chgPct = (chg / first * 100).toFixed(1);
+      var rangeLabel = {
+        '1mo': '1M', '3mo': '3M', '6mo': '6M', '1y': '1Y', '3y': '3Y', '5y': '5Y', 'max': 'All'
+      }[range] || range;
+
+      svg += '<div style="display:flex;gap:20px;justify-content:center;margin-top:10px;font-family:IBM Plex Mono,monospace;font-size:11px">';
+      svg += '<span>' + rangeLabel + ': <strong style="color:' + (chg >= 0 ? 'var(--green)' : 'var(--accent)') + '">' + (chg >= 0 ? '+' : '') + '$' + chg.toFixed(2) + ' (' + (chg >= 0 ? '+' : '') + chgPct + '%)</strong></span>';
       svg += '<span>High: <strong style="color:var(--gold)">$' + Math.max.apply(null, prices).toFixed(2) + '</strong></span>';
       svg += '<span>Low: <strong style="color:var(--teal)">$' + Math.min.apply(null, prices).toFixed(2) + '</strong></span>';
+      svg += '<span>Open: <strong>$' + first.toFixed(2) + '</strong></span>';
+      svg += '<span>Last: <strong style="color:var(--white)">$' + last.toFixed(2) + '</strong></span>';
       svg += '</div>';
+
       container.innerHTML = svg;
-    } catch (e) { container.innerHTML = '<div class="note">Chart: ' + e.message + '</div>'; }
+
+      // Attach hover handler
+      setupChartHover(prices, dates, P, cW, cH, min, rng);
+
+    } catch (e) {
+      container.innerHTML = '<div class="note">Chart: ' + e.message + '</div>';
+    }
+  }
+
+  function setupChartHover(prices, dates, padLeft, chartWidth, chartHeight, minPrice, priceRange) {
+    var overlay = document.getElementById('chart-overlay');
+    var crosshair = document.getElementById('chart-crosshair');
+    var dot = document.getElementById('chart-dot');
+    var tooltip = document.getElementById('chart-tooltip');
+    var ttDate = document.getElementById('tt-date');
+    var ttPrice = document.getElementById('tt-price');
+    var ttChange = document.getElementById('tt-change');
+    if (!overlay) return;
+
+    var svgEl = document.getElementById('chart-svg');
+
+    function getMouseIndex(e) {
+      var rect = svgEl.getBoundingClientRect();
+      var svgWidth = rect.width;
+      var viewBoxWidth = 900;
+      var scale = viewBoxWidth / svgWidth;
+      var mouseX = (e.clientX - rect.left) * scale;
+      var relX = mouseX - padLeft;
+      var pct = Math.max(0, Math.min(1, relX / chartWidth));
+      return Math.round(pct * (prices.length - 1));
+    }
+
+    overlay.addEventListener('mousemove', function(e) {
+      var idx = getMouseIndex(e);
+      if (idx < 0 || idx >= prices.length) return;
+
+      var price = prices[idx];
+      var date = dates[idx];
+      var chgFromFirst = price - prices[0];
+      var chgPct = ((chgFromFirst / prices[0]) * 100).toFixed(2);
+
+      // Update tooltip
+      tooltip.style.opacity = '1';
+      var dt = new Date(date);
+      var moNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      ttDate.textContent = moNames[dt.getMonth()] + ' ' + dt.getDate() + ', ' + dt.getFullYear();
+      ttPrice.textContent = '$' + price.toFixed(2);
+      ttPrice.style.color = price >= prices[0] ? 'var(--green)' : 'var(--accent)';
+      ttChange.textContent = (chgFromFirst >= 0 ? '+' : '') + '$' + chgFromFirst.toFixed(2) + ' (' + (chgFromFirst >= 0 ? '+' : '') + chgPct + '%)';
+      ttChange.style.color = chgFromFirst >= 0 ? 'var(--green)' : 'var(--accent)';
+
+      // Position crosshair
+      var rect = svgEl.getBoundingClientRect();
+      var xPct = idx / (prices.length - 1);
+      var pixelX = rect.left + (padLeft / 900) * rect.width + xPct * (chartWidth / 900) * rect.width;
+      var relPixelX = pixelX - svgEl.closest('.card').getBoundingClientRect().left;
+
+      var yPct = (price - minPrice) / priceRange;
+      var pixelY = rect.top + (15 / 340) * rect.height + (1 - yPct) * (chartHeight / 340) * rect.height;
+      var relPixelY = pixelY - svgEl.closest('.card').getBoundingClientRect().top;
+
+      crosshair.style.display = 'block';
+      crosshair.style.left = relPixelX + 'px';
+      crosshair.style.height = (chartHeight / 340) * rect.height + 'px';
+      crosshair.style.top = (15 / 340) * rect.height + 'px';
+
+      dot.style.display = 'block';
+      dot.style.left = relPixelX + 'px';
+      dot.style.top = relPixelY + 'px';
+    });
+
+    overlay.addEventListener('mouseleave', function() {
+      crosshair.style.display = 'none';
+      dot.style.display = 'none';
+      tooltip.style.opacity = '0';
+    });
+  }
+
+  // Range button click handlers
+  function setupRangeButtons() {
+    document.querySelectorAll('.range-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        loadPriceChart(this.dataset.range);
+      });
+    });
   }
 
   // ── Polymarket Prices ──
@@ -517,14 +701,15 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
     updateUTC();
     setInterval(updateUTC, 60000);
 
+    setupRangeButtons();
+
     loadPrices();
     setInterval(loadPrices, 60000);
 
     setTimeout(loadOptions, 1500);
     setInterval(loadOptions, 2 * 60000);
 
-    setTimeout(loadPriceChart, 2000);
-    setInterval(loadPriceChart, 60 * 60000);
+    setTimeout(function() { loadPriceChart('1y'); }, 2000);
 
     setTimeout(loadPolyPrices, 2500);
     setInterval(loadPolyPrices, 5 * 60000);
