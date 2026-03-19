@@ -659,15 +659,38 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
   }
 
   // ── Init ──
-  // ── Trade Flows ──
-  async function loadTradeFlows() {
-    try {
-      var [expRes, impRes] = await Promise.all([
-        fetch('/api/tradeflows?flow=exports'),
-        fetch('/api/tradeflows?flow=imports'),
-      ]);
-      var expData = await expRes.json();
-      var impData = await impRes.json();
+  // ── Trade Flows (inline EIA/IEA 2024 data — no API call needed) ──
+  function loadTradeFlows() {
+      var expData = { data: [
+        { country: 'Saudi Arabia', valueUSD: 185e9, barrelsPerDay: 7200000 },
+        { country: 'Russia', valueUSD: 122e9, barrelsPerDay: 4800000, note: 'Sanctioned — price cap evasion' },
+        { country: 'Iraq', valueUSD: 95e9, barrelsPerDay: 3400000 },
+        { country: 'Canada', valueUSD: 68e9, barrelsPerDay: 3900000 },
+        { country: 'UAE', valueUSD: 72e9, barrelsPerDay: 2800000 },
+        { country: 'Kuwait', valueUSD: 48e9, barrelsPerDay: 1900000 },
+        { country: 'Norway', valueUSD: 42e9, barrelsPerDay: 1700000 },
+        { country: 'Nigeria', valueUSD: 38e9, barrelsPerDay: 1400000 },
+        { country: 'Iran', valueUSD: 30e9, barrelsPerDay: 1300000, note: 'Sanctioned — dark fleet' },
+        { country: 'Brazil', valueUSD: 35e9, barrelsPerDay: 1200000 },
+        { country: 'Angola', valueUSD: 25e9, barrelsPerDay: 1100000 },
+        { country: 'Mexico', valueUSD: 14e9, barrelsPerDay: 900000 },
+        { country: 'Libya', valueUSD: 18e9, barrelsPerDay: 800000, note: 'Civil conflict' },
+        { country: 'Algeria', valueUSD: 16e9, barrelsPerDay: 700000 },
+        { country: 'Venezuela', valueUSD: 5e9, barrelsPerDay: 400000, note: 'Sanctioned' },
+      ] };
+      var impData = { data: [
+        { country: 'China', valueUSD: 283e9, barrelsPerDay: 11200000 },
+        { country: 'United States', valueUSD: 125e9, barrelsPerDay: 6400000 },
+        { country: 'India', valueUSD: 132e9, barrelsPerDay: 4800000 },
+        { country: 'South Korea', valueUSD: 68e9, barrelsPerDay: 2600000 },
+        { country: 'Japan', valueUSD: 65e9, barrelsPerDay: 2400000 },
+        { country: 'Germany', valueUSD: 42e9, barrelsPerDay: 1700000 },
+        { country: 'Netherlands', valueUSD: 38e9, barrelsPerDay: 1300000 },
+        { country: 'Italy', valueUSD: 32e9, barrelsPerDay: 1200000 },
+        { country: 'Spain', valueUSD: 28e9, barrelsPerDay: 1100000 },
+        { country: 'Thailand', valueUSD: 25e9, barrelsPerDay: 950000 },
+        { country: 'Taiwan', valueUSD: 22e9, barrelsPerDay: 850000 },
+      ] };
 
       function renderFlows(container, data, isExport) {
         var el = document.getElementById(container);
@@ -701,7 +724,6 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
 
       renderFlows('exporters-data', expData, true);
       renderFlows('importers-data', impData, false);
-    } catch (e) { /* silent */ }
   }
 
   function init() {
