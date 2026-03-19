@@ -434,8 +434,29 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
   </div>
 </div>
 
+<!-- ═══════ GLOBAL TRADE FLOWS ═══════ -->
+<div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--white);margin:28px 0 16px;padding-bottom:8px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:12px">
+  <span style="font-size:22px">🌍</span> Global Crude Oil Trade Flows
+  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-left:auto">UN COMTRADE · EIA · 2024</span>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:7px">Top Crude Exporters (b/d)<span style="flex:1;height:1px;background:var(--border)"></span></div>
+    <div id="exporters-data"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)">Loading export flows...</div></div>
+  </div>
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:16px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:7px">Top Crude Importers (b/d)<span style="flex:1;height:1px;background:var(--border)"></span></div>
+    <div id="importers-data"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)">Loading import flows...</div></div>
+  </div>
+</div>
+
+<div style="background:rgba(244,162,97,.06);border:1px solid rgba(244,162,97,.2);padding:10px 12px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.5;margin-bottom:20px">
+  <strong style="color:var(--gold)">How to read this:</strong> These are annual crude oil trade volumes by country. Compare exporter volumes to Hormuz flow (20M b/d) — Saudi, Iraq, UAE, Kuwait all transit through Hormuz. If the strait closes, ~17M b/d of exports have no bypass. On the import side, China + India + Japan + S. Korea = ~21M b/d of imports, mostly from Gulf producers. Asia is disproportionately exposed.
+</div>
+
 <div style="text-align:center;padding:30px 0;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">
-  BLACK ALPHA — Global Oil Monitor · Data: EIA, IEA, OPEC, IGU, S&P Platts, Yahoo Finance
+  BLACK ALPHA — Global Oil Monitor · Data: EIA, IEA, OPEC, IGU, S&P Platts, UN COMTRADE, Yahoo Finance
 </div>
 
 </div><!-- /container -->
@@ -638,11 +659,57 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
   }
 
   // ── Init ──
+  // ── Trade Flows ──
+  async function loadTradeFlows() {
+    try {
+      var [expRes, impRes] = await Promise.all([
+        fetch('/api/tradeflows?flow=exports'),
+        fetch('/api/tradeflows?flow=imports'),
+      ]);
+      var expData = await expRes.json();
+      var impData = await impRes.json();
+
+      function renderFlows(container, data, isExport) {
+        var el = document.getElementById(container);
+        if (!el || !data.data || data.data.length === 0) { if (el) el.innerHTML = '<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--muted)">No data</div>'; return; }
+        var maxBpd = Math.max.apply(null, data.data.map(function(d) { return d.barrelsPerDay || 0; }));
+        var html = '';
+        data.data.forEach(function(d) {
+          var bpd = d.barrelsPerDay || 0;
+          var bpdStr = bpd >= 1000000 ? (bpd / 1000000).toFixed(1) + 'M' : (bpd / 1000).toFixed(0) + 'K';
+          var valStr = d.valueUSD ? '$' + (d.valueUSD / 1e9).toFixed(0) + 'B' : '—';
+          var barW = maxBpd > 0 ? Math.round((bpd / maxBpd) * 100) : 0;
+          var hormuz = ['Saudi Arabia','Iraq','UAE','Kuwait','Iran','Qatar'].indexOf(d.country) >= 0;
+          var sanctioned = ['Iran','Venezuela','Russia'].indexOf(d.country) >= 0;
+          var barColor = sanctioned ? 'var(--accent)' : hormuz ? 'var(--gold)' : 'var(--teal)';
+          html += '<div style="margin-bottom:6px">'
+            + '<div style="display:flex;justify-content:space-between;font-family:IBM Plex Mono,monospace;font-size:10px;margin-bottom:2px">'
+            + '<span style="color:' + (hormuz ? 'var(--gold)' : 'var(--text)') + '">'
+            + (hormuz ? '⚠️ ' : '') + d.country
+            + (sanctioned ? ' <span style="color:var(--accent);font-size:8px">SANCTIONED</span>' : '')
+            + (d.note ? ' <span style="color:var(--muted);font-size:8px">' + d.note + '</span>' : '')
+            + '</span>'
+            + '<span style="color:var(--white);font-weight:600">' + bpdStr + ' b/d <span style="color:var(--muted);font-weight:400">' + valStr + '</span></span>'
+            + '</div>'
+            + '<div style="height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden">'
+            + '<div style="height:4px;border-radius:2px;background:' + barColor + ';width:' + barW + '%"></div>'
+            + '</div></div>';
+        });
+        if (data.source === 'fallback') html += '<div style="font-family:IBM Plex Mono,monospace;font-size:8px;color:var(--muted);margin-top:6px">Source: EIA/IEA estimates (COMTRADE API unavailable)</div>';
+        el.innerHTML = html;
+      }
+
+      renderFlows('exporters-data', expData, true);
+      renderFlows('importers-data', impData, false);
+    } catch (e) { /* silent */ }
+  }
+
   function init() {
     renderSeasonal();
     loadEIA();
     loadCracks();
     loadPetrodollar();
+    setTimeout(loadTradeFlows, 2000);
 
     // Refresh live data
     setInterval(loadEIA, 60 * 60000);
