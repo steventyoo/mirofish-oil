@@ -269,13 +269,6 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
   </div>
 </div>
 
-<!-- ═══════ PRICE HISTORY ═══════ -->
-<div class="section-header"><span class="sh-icon">📈</span> WTI 12-Month Price History <span class="sh-sub">YAHOO FINANCE · LIVE</span></div>
-
-<div class="card" style="margin-bottom:20px">
-  <div id="price-chart"><div class="note">Loading 12-month price history...</div></div>
-</div>
-
 <!-- ═══════ SUEZ CANAL MONITOR ═══════ -->
 <div class="section-header"><span class="sh-icon">⚓</span> Suez Canal Monitor <span class="sh-sub">SUEZ CANAL AUTHORITY</span></div>
 
@@ -476,114 +469,6 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
     }
   }
 
-  // ── Price History Chart ──
-  async function loadPriceChart() {
-    var container = document.getElementById('price-chart');
-    if (!container) return;
-
-    try {
-      var res = await fetchTimeout('/api/history', 12000);
-      if (!res.ok) throw new Error('api failed');
-      var data = await res.json();
-      if (!data || data.length < 10) throw new Error('insufficient data');
-
-      var prices = data.map(function(d) { return d.close; });
-      var dates = data.map(function(d) { return d.date; });
-      var min = Math.min.apply(null, prices) * 0.95;
-      var max = Math.max.apply(null, prices) * 1.05;
-      var range = max - min || 1;
-
-      var W = 700, H = 250, P = 45, PR = 10;
-      var cW = W - P - PR, cH = H - 30;
-
-      var points = prices.map(function(p, i) {
-        return (P + (i / (prices.length - 1)) * cW) + ',' + (10 + cH - ((p - min) / range) * cH);
-      });
-
-      var svg = '<svg viewBox="0 0 ' + W + ' ' + (H + 15) + '" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block">';
-      // Gradient
-      svg += '<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f4a261" stop-opacity="0.3"/><stop offset="100%" stop-color="#f4a261" stop-opacity="0.02"/></linearGradient></defs>';
-      // Grid
-      for (var g = 0; g <= 4; g++) {
-        var gy = 10 + (cH / 4) * g;
-        var gv = max - (range / 4) * g;
-        svg += '<line x1="' + P + '" y1="' + gy + '" x2="' + (P + cW) + '" y2="' + gy + '" stroke="var(--border)" stroke-width="0.5"/>';
-        svg += '<text x="' + (P - 4) + '" y="' + (gy + 3) + '" fill="var(--muted)" font-size="8" font-family="IBM Plex Mono,monospace" text-anchor="end">$' + gv.toFixed(0) + '</text>';
-      }
-      // Area
-      var areaPoints = points.join(' ') + ' ' + (P + cW) + ',' + (10 + cH) + ' ' + P + ',' + (10 + cH);
-      svg += '<polygon points="' + areaPoints + '" fill="url(#ag)"/>';
-      // Line
-      svg += '<polyline points="' + points.join(' ') + '" fill="none" stroke="#f4a261" stroke-width="2" opacity="0.9"/>';
-
-      // Event annotations
-      var events = [
-        { date: '2025-04-01', label: 'OPEC+ cuts' },
-        { date: '2025-06-15', label: 'Iran talks fail' },
-        { date: '2025-09-19', label: 'Drone attack' },
-        { date: '2025-10-01', label: 'China stimulus' },
-        { date: '2025-12-15', label: 'Fed cut' },
-        { date: '2026-01-15', label: 'Iran-US escalation' },
-        { date: '2026-02-20', label: 'Hormuz incidents' },
-        { date: '2026-03-05', label: 'US strikes Iran' },
-      ];
-      var labelSide = 0;
-      events.forEach(function(ev) {
-        var idx = dates.indexOf(ev.date);
-        if (idx < 0) {
-          for (var j = 0; j < dates.length; j++) { if (dates[j] >= ev.date) { idx = j; break; } }
-        }
-        if (idx < 0 || idx >= prices.length) return;
-        var ex = P + (idx / (prices.length - 1)) * cW;
-        var ey = 10 + cH - ((prices[idx] - min) / range) * cH;
-        svg += '<line x1="' + ex + '" y1="8" x2="' + ex + '" y2="' + (10 + cH) + '" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="3,2" opacity="0.5"/>';
-        var ly = labelSide % 2 === 0 ? 8 : 18;
-        svg += '<text x="' + (ex + 2) + '" y="' + ly + '" fill="var(--accent)" font-size="6.5" font-family="IBM Plex Mono,monospace" opacity="0.8">' + ev.label + '</text>';
-        labelSide++;
-      });
-
-      // Current price dot
-      var lastX = P + cW;
-      var lastY = 10 + cH - ((prices[prices.length - 1] - min) / range) * cH;
-      svg += '<circle cx="' + lastX + '" cy="' + lastY + '" r="3" fill="#f4a261" stroke="var(--bg)" stroke-width="1.5"/>';
-      svg += '<text x="' + (lastX - 4) + '" y="' + (lastY - 7) + '" fill="var(--white)" font-size="9" font-family="Bebas Neue,sans-serif" text-anchor="end">$' + prices[prices.length - 1].toFixed(2) + '</text>';
-
-      // Month labels
-      var prevMonth = -1;
-      var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      dates.forEach(function(d, i) {
-        var dt = new Date(d);
-        var m = dt.getMonth();
-        if (m !== prevMonth) {
-          prevMonth = m;
-          var mx = P + (i / (dates.length - 1)) * cW;
-          svg += '<text x="' + mx + '" y="' + (H + 10) + '" fill="var(--muted)" font-size="7" font-family="IBM Plex Mono,monospace" text-anchor="middle">' + monthNames[m] + (m === 0 ? ' ' + dt.getFullYear() : '') + '</text>';
-        }
-      });
-
-      svg += '</svg>';
-
-      // Stats
-      var first = prices[0];
-      var last = prices[prices.length - 1];
-      var chg = last - first;
-      var chgPct = (chg / first * 100).toFixed(1);
-      var high = Math.max.apply(null, prices);
-      var low = Math.min.apply(null, prices);
-
-      svg += '<div style="display:flex;gap:16px;justify-content:center;margin-top:8px;font-family:IBM Plex Mono,monospace;font-size:10px">';
-      svg += '<span>12M Change: <strong style="color:' + (chg >= 0 ? 'var(--green)' : 'var(--accent)') + '">' + (chg >= 0 ? '+' : '') + '$' + chg.toFixed(2) + ' (' + (chg >= 0 ? '+' : '') + chgPct + '%)</strong></span>';
-      svg += '<span>High: <strong style="color:var(--gold)">$' + high.toFixed(2) + '</strong></span>';
-      svg += '<span>Low: <strong style="color:var(--teal)">$' + low.toFixed(2) + '</strong></span>';
-      svg += '<span>Last: <strong style="color:var(--white)">$' + last.toFixed(2) + '</strong></span>';
-      svg += '</div>';
-
-      container.innerHTML = svg;
-    } catch (e) {
-      container.innerHTML = '<div class="note">Price chart: ' + e.message + '</div>';
-    }
-  }
-
   // ── Check iframe load (fallback for blocked embeds) ──
   function checkEmbeds() {
     var iframe = document.querySelector('.embed-frame');
@@ -607,9 +492,6 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
 
     setTimeout(loadPolymarket, 1500);
     setInterval(loadPolymarket, 5 * 60000);
-
-    setTimeout(loadPriceChart, 2000);
-    setInterval(loadPriceChart, 60 * 60000);
   }
 
   if (document.readyState === 'loading') {
