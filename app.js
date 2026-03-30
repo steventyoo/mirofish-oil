@@ -123,8 +123,7 @@
   function renderTrade() {
     const container = document.getElementById('trade-box');
     if (!container) return;
-    container.innerHTML = '<div class="note" style="padding:10px">Loading trade structure from swarm...</div>
-    `;
+    container.innerHTML = '<div class="note" style="padding:10px">Loading trade structure from swarm...</div>';
   }
 
   // ── RENDER: Bypass Pipes ──
