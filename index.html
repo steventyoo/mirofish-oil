@@ -65,7 +65,7 @@
     <span class="sep">///</span>
     <span id="ticker-hormuz2">HORMUZ: Loading...</span>
     <span class="sep">///</span>
-    <span>POSITIONING: Managed money 78th pctl · Short squeeze risk 0.32 · Crowded short</span>
+    <span id="ticker-positioning">POSITIONING: Loading CFTC data...</span>
     <span class="sep">///</span>
     <span id="ticker-wti2"></span>
     <span class="sep">///</span>
@@ -96,28 +96,28 @@
       <div class="live-prices">
         <div class="lp-card">
           <div class="lp-ticker">WTI (CL=F)</div>
-          <div class="lp-price" id="lp-wti-price">$78.42</div>
-          <div class="lp-change up" id="lp-wti-change">▲ +1.87 (+2.44%)</div>
+          <div class="lp-price" id="lp-wti-price">—</div>
+          <div class="lp-change" id="lp-wti-change">Loading...</div>
         </div>
         <div class="lp-card">
           <div class="lp-ticker">Brent (BZ=F)</div>
-          <div class="lp-price" id="lp-brent-price">$82.15</div>
-          <div class="lp-change up" id="lp-brent-change">▲ +1.63 (+2.02%)</div>
+          <div class="lp-price" id="lp-brent-price">—</div>
+          <div class="lp-change" id="lp-brent-change">Loading...</div>
         </div>
         <div class="lp-card">
           <div class="lp-ticker">VIX</div>
-          <div class="lp-price">18.72</div>
-          <div class="lp-change up">▲ +1.45 (+8.39%)</div>
+          <div class="lp-price" id="lp-vix-price">—</div>
+          <div class="lp-change" id="lp-vix-change">Loading...</div>
         </div>
       </div>
-      <div class="note"><span class="src">Mock data · Production connects Yahoo Finance</span></div>
+      <div class="note" id="lp-source"><span class="src">Yahoo Finance · Live</span></div>
     </div>
 
     <div class="sec">
       <div class="sec-label">Regime Classification</div>
       <div class="regime-box">
-        <div class="rl">Current Regime · 72% Confidence</div>
-        <div class="rv" style="color:var(--accent)">EVENT RISK</div>
+        <div class="rl" id="regime-label">Current Regime · Loading...</div>
+        <div class="rv" style="color:var(--accent)" id="regime-value">—</div>
       </div>
       <div id="regime-bars" style="margin-top:10px"></div>
     </div>
@@ -169,12 +169,12 @@
     <div class="sec">
       <div class="sec-label">Volatility State — Options</div>
       <div class="sg">
-        <div class="sc"><div class="v" style="color:var(--gold)">38th</div><div class="l">IV Rank Percentile</div></div>
-        <div class="sc"><div class="v" style="color:var(--accent)">-0.22</div><div class="l">IV vs Realized Spread</div></div>
+        <div class="sc"><div class="v" style="color:var(--gold)" id="iv-rank-val">—</div><div class="l">IV Rank Percentile</div></div>
+        <div class="sc"><div class="v" style="color:var(--accent)" id="iv-spread-val">—</div><div class="l">IV vs Realized Spread</div></div>
       </div>
       <div class="callout-box callout-red" style="margin-top:8px">
-        <div style="font-size:9px;color:var(--text);line-height:1.4">
-          <strong style="color:var(--accent)">Vol underpriced.</strong> IV rank at 38th pctl with scenario uncertainty this high suggests options are cheap.
+        <div style="font-size:9px;color:var(--text);line-height:1.4" id="vol-callout">
+          Loading options volatility data...
         </div>
       </div>
     </div>
@@ -198,8 +198,8 @@
       <div id="map"></div>
       <div class="map-risk">
         <div class="mr-label">Hormuz Risk Score</div>
-        <div class="mr-value">0.68</div>
-        <div class="mr-sub">4 incidents (7d) · Elevated</div>
+        <div class="mr-value" id="hormuz-risk-val">—</div>
+        <div class="mr-sub" id="hormuz-risk-sub">Loading Polymarket data...</div>
       </div>
       <div class="map-legend" id="map-legend">
         <div class="ml-title">Map Legend</div>

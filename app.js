@@ -11,6 +11,7 @@
   function renderRegimeBars() {
     const container = document.getElementById('regime-bars');
     if (!container) return;
+    // Regime bars still from data.js until swarm outputs regime classification
     container.innerHTML = REGIME.probabilities.map(r =>
       `<div class="rb-row">
         <span class="rb-label">${r.label}</span>
@@ -18,6 +19,11 @@
         <span class="rb-pct">${r.pct}%</span>
       </div>`
     ).join('');
+    // Update the regime label dynamically when swarm runs
+    var regLabel = document.getElementById('regime-label');
+    if (regLabel) regLabel.textContent = 'Current Regime · ' + Math.round(REGIME.confidence * 100) + '% Confidence';
+    var regVal = document.getElementById('regime-value');
+    if (regVal) regVal.textContent = REGIME.current.replace(/_/g, ' ');
   }
 
   // ── RENDER: Scenarios ──
@@ -103,47 +109,21 @@
   function renderConsensus() {
     const container = document.getElementById('consensus-box');
     if (!container) return;
-    container.innerHTML = `
-      <div class="consensus-row"><span class="consensus-label">Bullish Probability</span><span class="consensus-value" style="color:var(--green)">${CONSENSUS.bullish_prob}%</span></div>
-      <div class="consensus-row"><span class="consensus-label">Bearish Probability</span><span class="consensus-value" style="color:var(--accent)">${CONSENSUS.bearish_prob}%</span></div>
-      <div class="consensus-row"><span class="consensus-label">Neutral</span><span class="consensus-value">${CONSENSUS.neutral_prob}%</span></div>
-      <div class="consensus-row"><span class="consensus-label">Vol Expansion P</span><span class="consensus-value" style="color:var(--gold)">${CONSENSUS.vol_expansion_prob}%</span></div>
-      <div class="consensus-row"><span class="consensus-label">Disruption P</span><span class="consensus-value" style="color:var(--accent)">${CONSENSUS.disruption_prob}%</span></div>
-      <div class="consensus-row"><span class="consensus-label">Disagreement Score</span><span class="consensus-value">${CONSENSUS.disagreement_score}</span></div>
-    `;
+    container.innerHTML = '<div class="note" style="padding:10px">Loading swarm consensus...</div>';
   }
 
   // ── RENDER: Signal ──
   function renderSignal() {
     const container = document.getElementById('signal-box');
     if (!container) return;
-    container.innerHTML = `
-      <div class="signal-action">${SIGNAL.action}</div>
-      <div class="signal-meta">
-        <div><div class="sm-label">Fair Value</div><div class="sm-value">$${SIGNAL.fair_value}</div></div>
-        <div><div class="sm-label">Market Price</div><div class="sm-value">$${SIGNAL.market_price}</div></div>
-        <div><div class="sm-label">Edge</div><div class="sm-value" style="color:var(--green)">+${SIGNAL.edge_pct}%</div></div>
-        <div><div class="sm-label">Confidence</div><div class="sm-value">${SIGNAL.confidence}%</div></div>
-        <div><div class="sm-label">Horizon</div><div class="sm-value">${SIGNAL.horizon}</div></div>
-        <div><div class="sm-label">Vol Expansion P</div><div class="sm-value">${SIGNAL.vol_expansion_prob}%</div></div>
-      </div>
-      <ul class="signal-reasons">${SIGNAL.reasons.map(r => `<li>${r}</li>`).join('')}</ul>
-    `;
+    container.innerHTML = '<div class="signal-action" style="opacity:0.5">LOADING SWARM...</div><div class="note" style="padding:10px">Waiting for live swarm analysis (takes ~15s)...</div>';
   }
 
   // ── RENDER: Trade Structure ──
   function renderTrade() {
     const container = document.getElementById('trade-box');
     if (!container) return;
-    const t = SIGNAL.trade;
-    container.innerHTML = `
-      <div class="trade-title">${t.type} — ${t.ticker} ${t.tenor}</div>
-      <div class="trade-row"><span class="trade-row-label">Strike</span><span class="trade-row-value">${t.strike}</span></div>
-      <div class="trade-row"><span class="trade-row-label">Entry</span><span class="trade-row-value">${t.entry}</span></div>
-      <div class="trade-row"><span class="trade-row-label">Stop</span><span class="trade-row-value">${t.stop}</span></div>
-      <div class="trade-row"><span class="trade-row-label">Take Profit</span><span class="trade-row-value">${t.take_profit}</span></div>
-      <div class="trade-row"><span class="trade-row-label">Sizing</span><span class="trade-row-value">${t.sizing}</span></div>
-      <div class="trade-row"><span class="trade-row-label">Playbook</span><span class="trade-row-value" style="color:var(--gold)">${t.playbook}</span></div>
+    container.innerHTML = '<div class="note" style="padding:10px">Loading trade structure from swarm...</div>
     `;
   }
 
@@ -485,6 +465,27 @@
       }
 
       container.innerHTML = html || '<div class="note">No Polymarket data</div>';
+
+      // ── Wire Hormuz Risk Score from Polymarket ──
+      var hormuzNormal = data['strait-of-hormuz-traffic-returns-to-normal-by-april-30'];
+      if (hormuzNormal && hormuzNormal.markets && hormuzNormal.markets[0]) {
+        var prices = JSON.parse(hormuzNormal.markets[0].outcomePrices || '["0","0"]');
+        var normalProb = parseFloat(prices[0]);
+        var riskScore = (1 - normalProb).toFixed(2);
+        var riskLevel = riskScore > 0.7 ? 'Critical' : riskScore > 0.5 ? 'Elevated' : riskScore > 0.3 ? 'Moderate' : 'Low';
+        // Update map risk score
+        var riskVal = document.getElementById('hormuz-risk-val');
+        if (riskVal) riskVal.textContent = riskScore;
+        var riskSub = document.getElementById('hormuz-risk-sub');
+        if (riskSub) riskSub.textContent = Math.round(normalProb * 100) + '% normalization prob · ' + riskLevel;
+        // Update ticker bar
+        var hormuzTxt = 'HORMUZ: Risk ' + riskScore + ' · ' + Math.round((1 - normalProb) * 100) + '% disruption continues · ' + riskLevel;
+        ['', '2'].forEach(function(s) { var el = document.getElementById('ticker-hormuz' + s); if (el) el.textContent = hormuzTxt; });
+        // Update hormuz-intel page risk score if present
+        var hiRisk = document.getElementById('risk-score');
+        if (hiRisk) hiRisk.textContent = riskScore;
+      }
+
       return;
     }
 
@@ -903,6 +904,27 @@
         if (evFV && fairValue > 0) evFV.innerHTML = '$' + fairValue.toFixed(2) + ' <span style="font-size:14px;color:var(--muted)">Fair Value</span>';
         var evEdge = document.getElementById('ev-edge');
         if (evEdge && liveWTI > 0) evEdge.textContent = 'Edge: ' + (edge >= 0 ? '+' : '') + '$' + Math.abs(fairValue - liveWTI).toFixed(2) + ' (' + (edge >= 0 ? '+' : '') + edge + '%) vs $' + liveWTI.toFixed(2) + ' market';
+
+        // Update trade structure from live signal
+        var tradeBox = document.getElementById('trade-box');
+        if (tradeBox) {
+          var isCall = action.indexOf('CALL') >= 0;
+          var isFutures = action.indexOf('FUTURES') >= 0;
+          var tradeType = isCall ? 'OTM Call Option — CL 30D' : isFutures ? 'WTI Crude Futures — CL' : 'No Active Trade';
+          tradeBox.innerHTML = '<div class="trade-title">' + tradeType + '</div>'
+            + '<div class="trade-row"><span class="trade-row-label">Strike</span><span class="trade-row-value">' + (isCall ? '10-15 delta OTM' : isFutures ? 'Market' : '—') + '</span></div>'
+            + '<div class="trade-row"><span class="trade-row-label">Entry</span><span class="trade-row-value">On pullback or headline catalyst</span></div>'
+            + '<div class="trade-row"><span class="trade-row-label">Stop</span><span class="trade-row-value">' + (isCall ? 'Premium loss cap 35%' : 'ATR-based trailing stop') + '</span></div>'
+            + '<div class="trade-row"><span class="trade-row-label">Take Profit</span><span class="trade-row-value">Scale at 1.5x / 2.5x premium</span></div>'
+            + '<div class="trade-row"><span class="trade-row-label">Sizing</span><span class="trade-row-value">Risk 50bps NAV</span></div>'
+            + '<div class="trade-row"><span class="trade-row-label">Playbook</span><span class="trade-row-value" style="color:var(--gold)">Hormuz Tail Risk</span></div>';
+        }
+
+        // Update regime display
+        var regLabel = document.getElementById('regime-label');
+        if (regLabel) regLabel.textContent = 'Current Regime · ' + c.avg_confidence + '% Swarm Confidence';
+        var regVal = document.getElementById('regime-value');
+        if (regVal) regVal.textContent = c.bullish_prob > 50 ? 'BULLISH' : c.bearish_prob > 50 ? 'BEARISH' : 'EVENT RISK';
       }
 
       // Update ticker bar with live swarm data
@@ -1036,6 +1058,24 @@
       }
 
       container.innerHTML = html;
+
+      // Update IV rank + vol callout on dashboard
+      if (data.summary) {
+        var ivRankEl = document.getElementById('iv-rank-val');
+        var ivSpreadEl = document.getElementById('iv-spread-val');
+        var volCallout = document.getElementById('vol-callout');
+        var avgCallIV = parseFloat(data.summary.avgCallIV) || 0;
+        var avgPutIV = parseFloat(data.summary.avgPutIV) || 0;
+        var avgIV = ((avgCallIV + avgPutIV) / 2).toFixed(1);
+        if (ivRankEl) ivRankEl.textContent = avgIV + '%';
+        if (ivSpreadEl) ivSpreadEl.textContent = data.summary.skew + '%';
+        if (volCallout) {
+          var ivNum = parseFloat(avgIV);
+          if (ivNum > 50) volCallout.innerHTML = '<strong style="color:var(--accent)">Vol elevated.</strong> Avg IV at ' + avgIV + '% — options are expensive. Consider selling premium or waiting for cheaper entry.';
+          else if (ivNum > 35) volCallout.innerHTML = '<strong style="color:var(--gold)">Vol moderate.</strong> Avg IV at ' + avgIV + '% — fairly priced relative to current uncertainty.';
+          else volCallout.innerHTML = '<strong style="color:var(--green)">Vol cheap.</strong> Avg IV at ' + avgIV + '% — options underpricing scenario risk. Favorable for buying calls.';
+        }
+      }
     } catch (e) {
       container.innerHTML = '<div class="note">Options data: ' + e.message + '</div>';
     }
@@ -1149,6 +1189,11 @@
           label.innerHTML = '<span style="display:flex;align-items:center;gap:6px;flex:1"><span class="lp-dot"></span> CFTC Positioning</span><span class="src" style="margin-left:auto">LIVE · ' + data.latest.date + '</span>';
         }
       });
+
+      // Update ticker bar positioning
+      var posTxt = 'POSITIONING: MM ' + mm.percentile + 'th pctl · Net ' + (mm.net / 1000).toFixed(0) + 'K contracts · Squeeze risk ' + data.latest.short_squeeze_risk;
+      var posEl = document.getElementById('ticker-positioning');
+      if (posEl) posEl.textContent = posTxt;
     } catch (e) { /* keep mock data */ }
   }
 
@@ -1225,6 +1270,13 @@
           var wsSign = wtiQ.change >= 0 ? '+' : '';
           var wsArrow = wtiQ.change >= 0 ? '\u25B2' : '\u25BC';
           if (wsC) wsC.innerHTML = 'Curve: <strong style="color:var(--gold)">Backwardation</strong> \u00b7 ' + wsArrow + ' ' + wsSign + wtiQ.change.toFixed(2) + ' (' + wsSign + wtiQ.changePct.toFixed(2) + '%)';
+        }
+        // Update VIX card
+        var vixQ = batch['^VIX'];
+        if (vixQ) {
+          var vp = document.getElementById('lp-vix-price'); if (vp) vp.textContent = vixQ.price.toFixed(2);
+          var vc = document.getElementById('lp-vix-change');
+          if (vc) { vc.textContent = (vixQ.change >= 0 ? '\u25B2 +' : '\u25BC ') + vixQ.change.toFixed(2) + ' (' + (vixQ.change >= 0 ? '+' : '') + vixQ.changePct.toFixed(2) + '%)'; vc.className = 'lp-change ' + (vixQ.change >= 0 ? 'up' : 'down'); }
         }
         // Update ticker bar with live prices
         var wtiTxt = wtiQ ? 'WTI: $' + wtiQ.price.toFixed(2) + ' (' + (wtiQ.change >= 0 ? '+' : '') + wtiQ.changePct.toFixed(2) + '%)' : '';
