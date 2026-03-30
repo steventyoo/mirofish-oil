@@ -16,6 +16,10 @@ const TICKERS = [
   'FRO', 'FLNG', 'CF',
   // Additional defense & energy
   'BAH', 'HON', 'EQNR', 'EGY',
+  // Water security
+  'XYL', 'PNR', 'ERII', 'VEOEY', 'AWK',
+  // Food security
+  'NTR', 'BG', 'CTVA', 'ADM',
 ];
 
 async function fetchQuote(symbol) {

@@ -51,6 +51,19 @@ const FUNDAMENTALS = {
   FLNG: { name: 'FLEX LNG', sector: 'shipping', marketCap: 1.6e9, pe: 11.6, forwardPE: 11.6, ps: 4.60, evEbitda: 10.75, revenue: 0.348e9, ebitda: 0.242e9, profitMargin: 0.30, roe: 0.127, revenueGrowth: 0.12, dividendYield: 0.103, beta: 0.45, fiftyTwoWeekHigh: 32, fiftyTwoWeekLow: 18, note: '53-74yr contract backlog. 10.3% div yield. Most durable cash flow in shipping.' },
   CF:   { name: 'CF Industries', sector: 'shipping', marketCap: 18e9, pe: 11.4, forwardPE: 11.4, ps: 2.67, evEbitda: 5.38, revenue: 6.74e9, ebitda: 3.53e9, profitMargin: 0.28, roe: 0.22, revenueGrowth: 0.08, dividendYield: 0.016, beta: 0.69, fiftyTwoWeekHigh: 110, fiftyTwoWeekLow: 60, note: 'US fertilizer. 10.5% FCF yield. Gulf blockade = structural repricing. Best ROIC.' },
 
+  // ═══ WATER SECURITY ═══
+  XYL:  { name: 'Xylem', sector: 'water', marketCap: 29e9, pe: 23.3, forwardPE: 23.3, ps: 3.0, evEbitda: 16.8, revenue: 8.5e9, ebitda: 1.85e9, profitMargin: 0.10, roe: 0.08, revenueGrowth: 0.06, dividendYield: 0.012, beta: 1.05, fiftyTwoWeekHigh: 145, fiftyTwoWeekLow: 100, note: 'Water tech leader. Desalination + treatment infra.' },
+  PNR:  { name: 'Pentair', sector: 'water', marketCap: 17e9, pe: 21.5, forwardPE: 21.5, ps: 4.0, evEbitda: 17.8, revenue: 3.8e9, ebitda: 1.07e9, profitMargin: 0.16, roe: 0.22, revenueGrowth: 0.04, dividendYield: 0.011, beta: 1.10, fiftyTwoWeekHigh: 110, fiftyTwoWeekLow: 65, note: 'Filtration + water treatment. Gulf desal exposure.' },
+  ERII: { name: 'Energy Recovery', sector: 'water', marketCap: 0.8e9, pe: 20.8, forwardPE: 20.8, ps: 5.0, evEbitda: 28.5, revenue: 0.16e9, ebitda: 0.028e9, profitMargin: 0.12, roe: 0.06, revenueGrowth: 0.08, dividendYield: null, beta: 0.95, fiftyTwoWeekHigh: 25, fiftyTwoWeekLow: 12, note: 'Desal pressure exchangers. Pure-play water-energy nexus.' },
+  VEOEY:{ name: 'Veolia', sector: 'water', marketCap: 22e9, pe: 14.5, forwardPE: 14.5, ps: 0.45, evEbitda: 8.2, revenue: 48e9, ebitda: 5.85e9, profitMargin: 0.04, roe: 0.08, revenueGrowth: 0.03, dividendYield: 0.035, beta: 0.70, fiftyTwoWeekHigh: 38, fiftyTwoWeekLow: 25, note: 'Global water + waste. Largest water utility worldwide.' },
+  AWK:  { name: 'American Water Works', sector: 'water', marketCap: 28e9, pe: 26.0, forwardPE: 26.0, ps: 6.0, evEbitda: 21.0, revenue: 4.2e9, ebitda: 2.0e9, profitMargin: 0.24, roe: 0.10, revenueGrowth: 0.07, dividendYield: 0.022, beta: 0.55, fiftyTwoWeekHigh: 155, fiftyTwoWeekLow: 115, note: 'US regulated water utility. Defensive + inflation hedge.' },
+
+  // ═══ FOOD SECURITY ═══
+  NTR:  { name: 'Nutrien', sector: 'food', marketCap: 31e9, pe: 15.7, forwardPE: 15.7, ps: 1.0, evEbitda: 8.81, revenue: 25e9, ebitda: 4.8e9, profitMargin: 0.08, roe: 0.07, revenueGrowth: 0.02, dividendYield: 0.038, beta: 0.85, fiftyTwoWeekHigh: 65, fiftyTwoWeekLow: 40, note: 'Potash + nitrogen. Largest crop input company. War = fertilizer shortage.' },
+  BG:   { name: 'Bunge Global', sector: 'food', marketCap: 14e9, pe: 12.0, forwardPE: 12.0, ps: 0.25, evEbitda: 9.5, revenue: 53e9, ebitda: 2.0e9, profitMargin: 0.03, roe: 0.12, revenueGrowth: -0.05, dividendYield: 0.025, beta: 0.50, fiftyTwoWeekHigh: 115, fiftyTwoWeekLow: 75, note: 'Grain merchant. Trade route disruption = margin expansion.' },
+  CTVA: { name: 'Corteva', sector: 'food', marketCap: 47e9, pe: 20.5, forwardPE: 20.5, ps: 2.6, evEbitda: 13.0, revenue: 17e9, ebitda: 3.77e9, profitMargin: 0.12, roe: 0.10, revenueGrowth: 0.03, dividendYield: 0.011, beta: 0.75, fiftyTwoWeekHigh: 65, fiftyTwoWeekLow: 45, note: 'Seeds + crop protection. Pricing power in food crisis.' },
+  ADM:  { name: 'Archer-Daniels-Midland', sector: 'food', marketCap: 19e9, pe: 11.5, forwardPE: 11.5, ps: 0.22, evEbitda: 7.8, revenue: 85e9, ebitda: 3.1e9, profitMargin: 0.02, roe: 0.08, revenueGrowth: -0.08, dividendYield: 0.035, beta: 0.65, fiftyTwoWeekHigh: 60, fiftyTwoWeekLow: 38, note: 'Grain processing + logistics. Trade disruption beneficiary.' },
+
   // ═══ ENERGY MAJORS ═══
   XOM:  { name: 'Exxon Mobil', sector: 'energy', marketCap: 465e9, pe: 14.2, forwardPE: 13.5, ps: 1.30, evEbitda: 6.5, revenue: 340e9, ebitda: 62e9, profitMargin: 0.098, roe: 0.18, revenueGrowth: -0.02, dividendYield: 0.034, beta: 0.80, fiftyTwoWeekHigh: 126, fiftyTwoWeekLow: 95, note: 'Largest US oil major' },
   CVX:  { name: 'Chevron', sector: 'energy', marketCap: 280e9, pe: 15.5, forwardPE: 13.8, ps: 1.38, evEbitda: 6.8, revenue: 196e9, ebitda: 45e9, profitMargin: 0.098, roe: 0.13, revenueGrowth: -0.04, dividendYield: 0.042, beta: 0.85, fiftyTwoWeekHigh: 167, fiftyTwoWeekLow: 135, note: 'Integrated major, Permian + Guyana' },
@@ -93,7 +106,7 @@ export default async function handler(req, res) {
   try {
     // Filter out private companies (no ticker to fetch)
     const allSymbols = Object.keys(FUNDAMENTALS).filter(s => s !== 'AAON');
-    const results = { defense: [], drone: [], puredrone: [], space: [], sensor: [], cuas: [], shipping: [], energy: [], etfs: [] };
+    const results = { defense: [], drone: [], puredrone: [], space: [], sensor: [], cuas: [], shipping: [], water: [], food: [], energy: [], etfs: [] };
 
     // Fetch live prices in parallel
     const tickerMap = { FLIR: 'TDY' };
