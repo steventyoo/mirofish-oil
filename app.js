@@ -387,6 +387,13 @@
           changeEl.textContent = `${arrow} ${sign}${change.toFixed(2)} (${sign}${pct.toFixed(2)}%)`;
           changeEl.className = 'lp-change ' + (change >= 0 ? 'up' : 'down');
         }
+        // Update World State bignum with live WTI price
+        if (t.sym === 'CL=F') {
+          var wsP = document.getElementById('world-state-price');
+          if (wsP) wsP.innerHTML = '$' + price.toFixed(2) + ' <span class="u">WTI CL1</span>';
+          var wsC = document.getElementById('world-state-curve');
+          if (wsC) wsC.innerHTML = 'Curve: <strong style="color:var(--gold)">Backwardation</strong> · ' + arrow + ' ' + sign + change.toFixed(2) + ' (' + sign + pct.toFixed(2) + '%)';
+        }
         const txt = `${t.name}: $${price.toFixed(2)} ${arrow} ${sign}${change.toFixed(2)} (${sign}${pct.toFixed(2)}%)`;
         t.tickerIds.forEach(id => {
           const el = document.getElementById(id);
@@ -855,7 +862,21 @@
         var c = data.consensus;
         var action = c.top_expression ? c.top_expression.replace(/_/g, ' ').toUpperCase() : 'NO TRADE';
         var edgeColor = c.bullish_prob > 50 ? 'var(--green)' : 'var(--accent)';
-        signalContainer.querySelector('.signal-action').textContent = action;
+        try { signalContainer.querySelector('.signal-action').textContent = action; } catch(e) {}
+      }
+
+      // Update ticker bar with live swarm data
+      if (data.consensus) {
+        var c = data.consensus;
+        var action = c.top_expression ? c.top_expression.replace(/_/g, ' ').toUpperCase() : 'NO TRADE';
+        var regimeTxt = 'REGIME: EVENT_RISK · Swarm ' + c.bullish_prob + '% bullish · Signal: ' + action;
+        var signalTxt = 'SIGNAL: ' + action + ' · Avg Confidence ' + c.avg_confidence + '% · Disagreement ' + c.disagreement_score;
+        var consTxt = 'SWARM: ' + c.bullish_prob + '% bull / ' + c.bearish_prob + '% bear / ' + c.neutral_prob + '% neutral · ' + (c.agent_count || 8) + ' agents';
+        ['', '2'].forEach(function(suf) {
+          var r = document.getElementById('ticker-regime' + suf); if (r) r.textContent = regimeTxt;
+          var s = document.getElementById('ticker-signal' + suf); if (s) s.textContent = signalTxt;
+          var cn = document.getElementById('ticker-consensus' + suf); if (cn) cn.textContent = consTxt;
+        });
       }
 
       // Add a "LIVE SWARM" indicator
@@ -1045,6 +1066,10 @@
             bars.forEach(function(b) { b.remove(); });
             label.insertAdjacentHTML('afterend', html);
           }
+
+          // Also update the new eia-inventory container if it exists
+          var eiaEl = document.getElementById('eia-inventory');
+          if (eiaEl && html) eiaEl.innerHTML = html;
         }
       });
     } catch (e) { /* keep mock data */ }
@@ -1061,22 +1086,27 @@
       var mm = data.latest.managed_money;
       var oi = data.latest.open_interest;
 
-      // Find positioning section
+      var cftcHtml = '<div class="sg">'
+        + '<div class="sc"><div class="v" style="color:var(--gold)">' + mm.percentile + 'th</div><div class="l">Net Length Pctl</div></div>'
+        + '<div class="sc"><div class="v" style="color:var(--accent)">' + data.latest.short_squeeze_risk + '</div><div class="l">Squeeze Risk</div></div>'
+        + '<div class="sc"><div class="v" style="color:var(--warn)">' + (mm.net / 1000).toFixed(0) + 'K</div><div class="l">MM Net Contracts</div></div>'
+        + '<div class="sc"><div class="v" style="color:var(--teal)">' + (mm.net_change_1w > 0 ? '+' : '') + (mm.net_change_1w / 1000).toFixed(1) + 'K</div><div class="l">Net Change (1w)</div></div>'
+        + '</div>';
+
+      // Update the cftc-positioning container
+      var cftcEl = document.getElementById('cftc-positioning');
+      if (cftcEl) cftcEl.innerHTML = cftcHtml;
+
+      // Also try the old selector approach for backward compat
       var sections = document.querySelectorAll('.sec-label');
       sections.forEach(function(label) {
-        if (label.textContent.includes('Positioning')) {
+        if (label.textContent.includes('Positioning') || label.textContent.includes('CFTC')) {
           var sec = label.parentElement;
           var grid = sec.querySelector('.sg');
           if (grid) {
-            grid.innerHTML = ''
-              + '<div class="sc"><div class="v" style="color:var(--gold)">' + mm.percentile + 'th</div><div class="l">Net Length Pctl</div></div>'
-              + '<div class="sc"><div class="v" style="color:var(--accent)">' + data.latest.short_squeeze_risk + '</div><div class="l">Squeeze Risk</div></div>'
-              + '<div class="sc"><div class="v" style="color:var(--warn)">' + (mm.net / 1000).toFixed(0) + 'K</div><div class="l">MM Net Contracts</div></div>'
-              + '<div class="sc"><div class="v" style="color:var(--teal)">' + (mm.net_change_1w > 0 ? '+' : '') + (mm.net_change_1w / 1000).toFixed(1) + 'K</div><div class="l">Net Change (1w)</div></div>';
-
-            // Update label
-            label.innerHTML = '<span style="display:flex;align-items:center;gap:6px;flex:1"><span class="lp-dot"></span> CFTC Positioning</span><span class="src" style="margin-left:auto">LIVE · ' + data.latest.date + '</span>';
+            grid.innerHTML = cftcHtml.replace('<div class="sg">','').replace('</div>','');
           }
+          label.innerHTML = '<span style="display:flex;align-items:center;gap:6px;flex:1"><span class="lp-dot"></span> CFTC Positioning</span><span class="src" style="margin-left:auto">LIVE · ' + data.latest.date + '</span>';
         }
       });
     } catch (e) { /* keep mock data */ }
