@@ -1176,6 +1176,25 @@
           const txt = t.name + ': $' + quote.price.toFixed(2) + ' ' + arrow + ' ' + sign + quote.change.toFixed(2) + ' (' + sign + quote.changePct.toFixed(2) + '%)';
           t.tickerIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = txt; });
         }
+        // Update World State bignum with live WTI
+        var wtiQ = batch['CL=F'];
+        if (wtiQ) {
+          var wsP = document.getElementById('world-state-price');
+          if (wsP) wsP.innerHTML = '$' + wtiQ.price.toFixed(2) + ' <span class="u">WTI CL1</span>';
+          var wsC = document.getElementById('world-state-curve');
+          var wsSign = wtiQ.change >= 0 ? '+' : '';
+          var wsArrow = wtiQ.change >= 0 ? '\u25B2' : '\u25BC';
+          if (wsC) wsC.innerHTML = 'Curve: <strong style="color:var(--gold)">Backwardation</strong> \u00b7 ' + wsArrow + ' ' + wsSign + wtiQ.change.toFixed(2) + ' (' + wsSign + wtiQ.changePct.toFixed(2) + '%)';
+        }
+        // Update ticker bar with live prices
+        var wtiTxt = wtiQ ? 'WTI: $' + wtiQ.price.toFixed(2) + ' (' + (wtiQ.change >= 0 ? '+' : '') + wtiQ.changePct.toFixed(2) + '%)' : '';
+        var brtQ = batch['BZ=F'];
+        var brtTxt = brtQ ? 'BRENT: $' + brtQ.price.toFixed(2) + ' (' + (brtQ.change >= 0 ? '+' : '') + brtQ.changePct.toFixed(2) + '%)' : '';
+        ['', '2'].forEach(function(s) {
+          var w = document.getElementById('ticker-wti' + s); if (w && wtiTxt) w.textContent = wtiTxt;
+          var b = document.getElementById('ticker-brent' + s); if (b && brtTxt) b.textContent = brtTxt;
+        });
+
         const ts = document.getElementById('lp-timestamp');
         if (ts) ts.textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         if (brentPrice) updateScenariosFromLivePrice(brentPrice);
