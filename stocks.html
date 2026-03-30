@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLACK ALPHA — Stocks</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0b0f; --panel: #0d0f18; --border: #1b2133;
+  --accent: #e63946; --gold: #f4a261; --teal: #2a9d8f;
+  --blue: #457b9d; --purple: #6c5ce7; --text: #c8cdd8;
+  --muted: #5a6278; --white: #eef0f7; --green: #52b788;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex Sans', sans-serif; color: var(--text); }
+::-webkit-scrollbar { width: 2px; }
+::-webkit-scrollbar-thumb { background: var(--border); }
+
+.header { height: 68px; background: #080a12; border-bottom: 2px solid var(--accent); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+.breaking-badge { background: var(--accent); color: #fff; font-weight: 700; padding: 2px 10px; border-radius: 2px; margin-right: 14px; font-size: 11px; letter-spacing: 2px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.main-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: var(--white); line-height: 1; }
+.main-title span { color: var(--accent); }
+.subtitle { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: .8px; margin-top: 2px; text-transform: uppercase; }
+.nav-tabs { display: flex; gap: 0; align-items: stretch; height: 100%; }
+.nav-tab { display: flex; align-items: center; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--muted); text-decoration: none; padding: 0 16px; border-bottom: 3px solid transparent; transition: all 0.2s; }
+.nav-tab:hover { color: var(--white); background: rgba(255,255,255,.03); }
+.nav-tab.active { color: var(--white); border-bottom-color: var(--accent); background: rgba(230,57,70,.06); }
+
+.container { max-width: 1600px; margin: 0 auto; padding: 20px 24px; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 16px; margin-bottom: 16px; }
+.card-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+.card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.card-title .live { width: 5px; height: 5px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+.note { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); }
+
+.section-header { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--white); margin: 28px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.section-header .sh-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-left: auto; }
+
+.intel-table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 10px; }
+.intel-table th { text-align: left; color: var(--muted); font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 5px 6px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--panel); }
+.intel-table td { padding: 5px 6px; border-bottom: 1px solid rgba(255,255,255,.03); }
+.intel-table tr:hover td { background: rgba(255,255,255,.03); }
+.intel-table .val { text-align: right; }
+
+/* Filter buttons */
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.filter-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 4px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; transition: all 0.15s; }
+.filter-btn:hover { color: var(--white); border-color: var(--muted); }
+.filter-btn.active { color: var(--white); border-color: var(--accent); background: rgba(230,57,70,.1); }
+
+/* Sector badges */
+.sector-badge { display: inline-block; padding: 1px 5px; border-radius: 2px; font-size: 7px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+.sb-defense { background: rgba(0,229,255,.15); color: #00e5ff; }
+.sb-drone { background: rgba(108,92,231,.15); color: var(--purple); }
+.sb-shipping { background: rgba(255,77,158,.15); color: #ff4d9e; }
+.sb-water { background: rgba(42,157,143,.15); color: var(--teal); }
+.sb-food { background: rgba(82,183,136,.15); color: var(--green); }
+.sb-energy { background: rgba(244,162,97,.15); color: var(--gold); }
+.sb-etf { background: rgba(90,98,120,.15); color: var(--muted); }
+
+.callout { padding: 10px 12px; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; line-height: 1.5; margin-bottom: 16px; }
+.callout-gold { background: rgba(244,162,97,.06); border: 1px solid rgba(244,162,97,.2); }
+.callout strong { color: var(--white); }
+
+/* Stats grid */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-bottom: 20px; }
+.stat-card { background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; }
+.stat-card .sv { font-family: 'Bebas Neue', sans-serif; font-size: 24px; line-height: 1; }
+.stat-card .sl { font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+.stat-card .ss { font-family: 'IBM Plex Mono', monospace; font-size: 9px; margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;flex-shrink:0">
+    <span class="breaking-badge">LIVE</span>
+    <div>
+      <div class="main-title">BLACK <span>ALPHA</span></div>
+      <div class="subtitle">Global Oil Monitor</div>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <a href="/" class="nav-tab">Dashboard</a>
+    <a href="/track-record.html" class="nav-tab">Track Record</a>
+    <a href="/supply-demand.html" class="nav-tab">Supply & Demand</a>
+    <a href="/hormuz-intel.html" class="nav-tab">Hormuz Intel</a>
+    <a href="/pricing.html" class="nav-tab">Pricing</a>
+    <a href="/war-tracker.html" class="nav-tab">War Tracker</a>
+    <a href="/stocks.html" class="nav-tab active">Stocks</a>
+  </div>
+  <div style="text-align:right;flex-shrink:0">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold);letter-spacing:2px" id="live-utc"></div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted)">Yahoo Finance · Live Prices · Quarterly Fundamentals</div>
+  </div>
+</div>
+
+<div class="container">
+
+<div class="section-header">Operation Epic Fury — Full Beneficiary Universe <span class="sh-sub" id="stock-count">Loading...</span></div>
+
+<div class="callout callout-gold">
+  <strong style="color:var(--gold)">How to read this:</strong> Defense stocks (RTX, LMT, NOC) often move before oil on conflict escalation. If defense surges while oil is flat, the market is pricing conflict expansion before it hits supply. Shipping (FRO, FLNG) is binary on Hormuz — if it reopens, day rates collapse. Water + Food are second-order beneficiaries — energy crisis cascades into desal and fertilizer shortages.
+</div>
+
+<!-- Filter buttons -->
+<div class="filters">
+  <button class="filter-btn active" data-filter="all">ALL</button>
+  <button class="filter-btn" data-filter="defense" style="border-color:rgba(0,229,255,.3)">DEFENSE</button>
+  <button class="filter-btn" data-filter="drone" style="border-color:rgba(108,92,231,.3)">DRONE / ISR</button>
+  <button class="filter-btn" data-filter="shipping" style="border-color:rgba(255,77,158,.3)">SHIPPING / TANKERS</button>
+  <button class="filter-btn" data-filter="water" style="border-color:rgba(42,157,143,.3)">WATER SECURITY</button>
+  <button class="filter-btn" data-filter="food" style="border-color:rgba(82,183,136,.3)">FOOD SECURITY</button>
+  <button class="filter-btn" data-filter="energy" style="border-color:rgba(244,162,97,.3)">ENERGY</button>
+  <button class="filter-btn" data-filter="etf" style="border-color:rgba(90,98,120,.3)">OIL ETFs</button>
+</div>
+
+<!-- Standout signals -->
+<div class="stats-grid" id="standout-cards"></div>
+
+<!-- Main table -->
+<div class="card" style="overflow-x:auto">
+  <div class="card-title"><span class="live"></span> All Stocks — Live Prices + Quarterly Fundamentals</div>
+  <div id="all-stocks-table"><div class="note">Loading 35+ stocks from /api/fundamentals...</div></div>
+</div>
+
+<div style="text-align:center;padding:30px 0;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)">
+  BLACK ALPHA — Stocks · Live prices: Yahoo Finance · Fundamentals: SEC 8-K / Earnings reports (Q4 2025 / Q1 2026) · NOT FINANCIAL ADVICE
+</div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var allStocks = [];
+  var currentFilter = 'all';
+
+  function fmtNum(v, d) { if (v === null || v === undefined) return '—'; return Number(v).toFixed(d !== undefined ? d : 2); }
+  function fmtMcap(v) { if (!v) return '—'; if (Math.abs(v) >= 1e12) return '$' + (v/1e12).toFixed(1) + 'T'; if (Math.abs(v) >= 1e9) return '$' + (v/1e9).toFixed(1) + 'B'; if (Math.abs(v) >= 1e6) return '$' + (v/1e6).toFixed(0) + 'M'; return '$' + v; }
+  function fmtPct(v) { if (v === null || v === undefined) return '—'; return (v * 100).toFixed(1) + '%'; }
+
+  var sectorColors = {
+    defense: { bg: 'rgba(0,229,255,.15)', color: '#00e5ff', label: 'DEFENSE' },
+    drone: { bg: 'rgba(108,92,231,.15)', color: 'var(--purple)', label: 'DRONE' },
+    puredrone: { bg: 'rgba(108,92,231,.15)', color: 'var(--purple)', label: 'DRONE' },
+    space: { bg: 'rgba(108,92,231,.15)', color: 'var(--purple)', label: 'SPACE' },
+    sensor: { bg: 'rgba(108,92,231,.15)', color: 'var(--purple)', label: 'SENSOR' },
+    cuas: { bg: 'rgba(108,92,231,.15)', color: 'var(--purple)', label: 'C-UAS' },
+    shipping: { bg: 'rgba(255,77,158,.15)', color: '#ff4d9e', label: 'SHIPPING' },
+    water: { bg: 'rgba(42,157,143,.15)', color: 'var(--teal)', label: 'WATER' },
+    food: { bg: 'rgba(82,183,136,.15)', color: 'var(--green)', label: 'FOOD' },
+    energy: { bg: 'rgba(244,162,97,.15)', color: 'var(--gold)', label: 'ENERGY' },
+    etf: { bg: 'rgba(90,98,120,.15)', color: 'var(--muted)', label: 'ETF' },
+  };
+
+  function sectorBadge(sector) {
+    var s = sectorColors[sector] || sectorColors.defense;
+    return '<span style="display:inline-block;padding:1px 5px;border-radius:2px;font-size:7px;font-weight:700;letter-spacing:.5px;background:' + s.bg + ';color:' + s.color + '">' + s.label + '</span>';
+  }
+
+  function buildTable(stocks) {
+    if (!stocks || stocks.length === 0) return '<div class="note">No stocks match filter</div>';
+    var h = '<table class="intel-table" style="font-size:9px;min-width:1100px">';
+    h += '<tr><th>Sector</th><th>Ticker</th><th>Name</th><th class="val">Price</th><th class="val">Chg%</th><th class="val">Mkt Cap</th><th class="val">P/E</th><th class="val">Fwd P/E</th><th class="val">P/S</th><th class="val">EV/EBITDA</th><th class="val">Revenue</th><th class="val">EBITDA</th><th class="val">Margin</th><th class="val">ROE</th><th class="val">Rev Growth</th><th class="val">Div Yield</th><th class="val">Beta</th><th class="val">52W Range</th><th>Thesis</th></tr>';
+    stocks.forEach(function(s) {
+      var chgC = s.changePct >= 0 ? 'var(--green)' : 'var(--accent)';
+      var peC = s.pe && s.pe < 15 ? 'var(--green)' : s.pe && s.pe > 30 ? 'var(--accent)' : 'var(--text)';
+      var marginVal = s.profitMargin || s.operatingMargin;
+      var marginC = marginVal && marginVal > 0.15 ? 'var(--green)' : marginVal && marginVal > 0.05 ? 'var(--gold)' : 'var(--accent)';
+      var roeC = s.roe && s.roe > 0.2 ? 'var(--green)' : s.roe && s.roe > 0.1 ? 'var(--gold)' : 'var(--text)';
+      var growthC = s.revenueGrowth && s.revenueGrowth > 0.1 ? 'var(--green)' : s.revenueGrowth && s.revenueGrowth > 0 ? 'var(--teal)' : 'var(--accent)';
+      h += '<tr>'
+        + '<td>' + sectorBadge(s.sector) + '</td>'
+        + '<td style="color:var(--white);font-weight:700">' + s.symbol + '</td>'
+        + '<td style="color:var(--text);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (s.name || '') + '</td>'
+        + '<td class="val" style="color:var(--white);font-weight:600">' + (s.price > 0 ? '$' + fmtNum(s.price) : '—') + '</td>'
+        + '<td class="val" style="color:' + chgC + '">' + (s.price > 0 ? (s.changePct >= 0 ? '+' : '') + fmtNum(s.changePct) + '%' : '—') + '</td>'
+        + '<td class="val">' + fmtMcap(s.marketCap) + '</td>'
+        + '<td class="val" style="color:' + peC + '">' + (s.pe ? fmtNum(s.pe, 1) : '—') + '</td>'
+        + '<td class="val">' + (s.forwardPE ? fmtNum(s.forwardPE, 1) : '—') + '</td>'
+        + '<td class="val">' + (s.ps ? fmtNum(s.ps, 1) : '—') + '</td>'
+        + '<td class="val">' + (s.evEbitda ? fmtNum(s.evEbitda, 1) : '—') + '</td>'
+        + '<td class="val">' + fmtMcap(s.revenue) + '</td>'
+        + '<td class="val">' + fmtMcap(s.ebitda) + '</td>'
+        + '<td class="val" style="color:' + marginC + '">' + fmtPct(marginVal) + '</td>'
+        + '<td class="val" style="color:' + roeC + '">' + fmtPct(s.roe) + '</td>'
+        + '<td class="val" style="color:' + growthC + '">' + fmtPct(s.revenueGrowth) + '</td>'
+        + '<td class="val">' + (s.dividendYield ? fmtPct(s.dividendYield) : '—') + '</td>'
+        + '<td class="val">' + (s.beta !== null ? fmtNum(s.beta, 2) : '—') + '</td>'
+        + '<td class="val" style="font-size:8px;color:var(--muted)">$' + (s.fiftyTwoWeekLow ? fmtNum(s.fiftyTwoWeekLow, 0) : '?') + '-' + (s.fiftyTwoWeekHigh ? fmtNum(s.fiftyTwoWeekHigh, 0) : '?') + '</td>'
+        + '<td style="font-size:8px;color:var(--gold);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (s.note || '') + '</td>'
+        + '</tr>';
+    });
+    h += '</table>';
+    return h;
+  }
+
+  function renderTable() {
+    var filtered = currentFilter === 'all' ? allStocks : allStocks.filter(function(s) {
+      if (currentFilter === 'drone') return ['drone','puredrone','space','sensor','cuas'].indexOf(s.sector) >= 0;
+      return s.sector === currentFilter;
+    });
+    var el = document.getElementById('all-stocks-table');
+    if (el) el.innerHTML = buildTable(filtered);
+    var countEl = document.getElementById('stock-count');
+    if (countEl) countEl.textContent = filtered.length + ' STOCKS · LIVE PRICES';
+  }
+
+  function renderStandouts() {
+    var container = document.getElementById('standout-cards');
+    if (!container || allStocks.length === 0) return;
+
+    // Find standouts
+    var withPE = allStocks.filter(function(s) { return s.pe && s.pe > 0; });
+    var withEV = allStocks.filter(function(s) { return s.evEbitda && s.evEbitda > 0; });
+    var withDiv = allStocks.filter(function(s) { return s.dividendYield && s.dividendYield > 0; });
+    var withGrowth = allStocks.filter(function(s) { return s.revenueGrowth && s.revenueGrowth > 0; });
+    var withBeta = allStocks.filter(function(s) { return s.beta !== null && s.beta !== undefined; });
+    var withROE = allStocks.filter(function(s) { return s.roe && s.roe > 0; });
+
+    var cheapestPE = withPE.sort(function(a,b) { return a.pe - b.pe; })[0];
+    var cheapestEV = withEV.sort(function(a,b) { return a.evEbitda - b.evEbitda; })[0];
+    var highestDiv = withDiv.sort(function(a,b) { return b.dividendYield - a.dividendYield; })[0];
+    var fastestGrowth = withGrowth.sort(function(a,b) { return b.revenueGrowth - a.revenueGrowth; })[0];
+    var lowestBeta = withBeta.sort(function(a,b) { return a.beta - b.beta; })[0];
+    var highestROE = withROE.sort(function(a,b) { return b.roe - a.roe; })[0];
+
+    var cards = [
+      { label: 'Cheapest P/E', value: cheapestPE ? cheapestPE.symbol + ' at ' + fmtNum(cheapestPE.pe, 1) + 'x' : '—', sub: cheapestPE ? cheapestPE.note : '', color: 'var(--green)' },
+      { label: 'Cheapest EV/EBITDA', value: cheapestEV ? cheapestEV.symbol + ' at ' + fmtNum(cheapestEV.evEbitda, 1) + 'x' : '—', sub: cheapestEV ? cheapestEV.note : '', color: 'var(--gold)' },
+      { label: 'Highest Div Yield', value: highestDiv ? highestDiv.symbol + ' at ' + fmtPct(highestDiv.dividendYield) : '—', sub: highestDiv ? highestDiv.note : '', color: 'var(--teal)' },
+      { label: 'Fastest Rev Growth', value: fastestGrowth ? fastestGrowth.symbol + ' at ' + fmtPct(fastestGrowth.revenueGrowth) : '—', sub: fastestGrowth ? fastestGrowth.note : '', color: 'var(--accent)' },
+      { label: 'Lowest Beta', value: lowestBeta ? lowestBeta.symbol + ' at ' + fmtNum(lowestBeta.beta, 2) : '—', sub: lowestBeta ? lowestBeta.note : '', color: 'var(--blue)' },
+      { label: 'Highest ROE', value: highestROE ? highestROE.symbol + ' at ' + fmtPct(highestROE.roe) : '—', sub: highestROE ? highestROE.note : '', color: 'var(--purple)' },
+    ];
+
+    container.innerHTML = cards.map(function(c) {
+      return '<div class="stat-card" style="border-left:3px solid ' + c.color + '">'
+        + '<div class="sl">' + c.label + '</div>'
+        + '<div class="sv" style="color:' + c.color + ';font-size:20px">' + c.value + '</div>'
+        + '<div class="ss" style="color:var(--muted);font-size:8px;line-height:1.4;margin-top:4px">' + c.sub + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  async function loadStocks() {
+    try {
+      var res = await fetch('/api/fundamentals');
+      if (!res.ok) throw new Error('API failed');
+      var data = await res.json();
+
+      allStocks = [];
+      ['defense','drone','puredrone','space','sensor','cuas','shipping','water','food','energy','etfs'].forEach(function(key) {
+        var arr = data[key];
+        if (arr && arr.length > 0) {
+          arr.forEach(function(s) { s.sector = key === 'etfs' ? 'etf' : key; allStocks.push(s); });
+        }
+      });
+
+      renderTable();
+      renderStandouts();
+    } catch (e) {
+      document.getElementById('all-stocks-table').innerHTML = '<div class="note">Error: ' + e.message + '</div>';
+    }
+  }
+
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      renderTable();
+    });
+  });
+
+  // UTC clock
+  function updateUTC() {
+    var el = document.getElementById('live-utc');
+    if (!el) return;
+    var now = new Date();
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    el.textContent = months[now.getUTCMonth()] + ' ' + now.getUTCDate() + ', ' + now.getUTCFullYear() + ' \u00b7 ' + String(now.getUTCHours()).padStart(2,'0') + ':' + String(now.getUTCMinutes()).padStart(2,'0') + ' UTC';
+  }
+
+  // Init
+  updateUTC();
+  setInterval(updateUTC, 60000);
+  loadStocks();
+  setInterval(loadStocks, 60000);
+})();
+</script>
+</body>
+</html>

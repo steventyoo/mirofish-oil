@@ -865,8 +865,21 @@
         var liveWTI = 0;
         var wtiEl = document.getElementById('lp-wti-price');
         if (wtiEl) { var m = wtiEl.textContent.match(/\$([\d.]+)/); if (m) liveWTI = parseFloat(m[1]); }
-        // Compute fair value from scenarios (weighted avg)
-        var fairValue = liveWTI > 0 ? Math.round(liveWTI * (1 + (c.bullish_prob - c.bearish_prob) / 200) * 100) / 100 : 0;
+        // Fair value from scenario-weighted expected value
+        // Uses the same scenario probabilities as the Scenario Engine
+        // Partial (18%) + Full (5%) + War (2%) + Status Quo (28%) + Demand Shock (12%) + De-escalation (7%) + OPEC Cut (28%)
+        var fairValue = 0;
+        if (liveWTI > 0) {
+          fairValue = Math.round((
+            0.18 * (liveWTI * 1.35) +  // Partial disruption: +35%
+            0.05 * (liveWTI * 1.75) +  // Full blockade: +75%
+            0.02 * (liveWTI * 2.30) +  // Regional war: +130%
+            0.28 * (liveWTI * 1.0) +   // Status quo: flat
+            0.12 * (liveWTI * 0.85) +  // Demand shock: -15%
+            0.07 * (liveWTI * 0.92) +  // De-escalation: -8%
+            0.28 * (liveWTI * 1.05)    // OPEC cut: +5%
+          ) * 100) / 100;
+        }
         var edge = liveWTI > 0 ? Math.round(((fairValue - liveWTI) / liveWTI) * 1000) / 10 : 0;
 
         var reasons = (c.top_drivers || []).slice(0, 4).map(function(d) {
