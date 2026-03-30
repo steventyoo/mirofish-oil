@@ -857,12 +857,39 @@
         }
       }
 
-      // Update signal from consensus
+      // Update ENTIRE signal panel from live swarm + live prices
       if (data.consensus && signalContainer) {
         var c = data.consensus;
         var action = c.top_expression ? c.top_expression.replace(/_/g, ' ').toUpperCase() : 'NO TRADE';
-        var edgeColor = c.bullish_prob > 50 ? 'var(--green)' : 'var(--accent)';
-        try { signalContainer.querySelector('.signal-action').textContent = action; } catch(e) {}
+        // Get live WTI price for market price
+        var liveWTI = 0;
+        var wtiEl = document.getElementById('lp-wti-price');
+        if (wtiEl) { var m = wtiEl.textContent.match(/\$([\d.]+)/); if (m) liveWTI = parseFloat(m[1]); }
+        // Compute fair value from scenarios (weighted avg)
+        var fairValue = liveWTI > 0 ? Math.round(liveWTI * (1 + (c.bullish_prob - c.bearish_prob) / 200) * 100) / 100 : 0;
+        var edge = liveWTI > 0 ? Math.round(((fairValue - liveWTI) / liveWTI) * 1000) / 10 : 0;
+
+        var reasons = (c.top_drivers || []).slice(0, 4).map(function(d) {
+          return '<div class="signal-reason">\u25B8 ' + d + '</div>';
+        }).join('');
+
+        signalContainer.innerHTML = ''
+          + '<div class="signal-action">' + action + '</div>'
+          + '<div class="signal-meta">'
+          + '<div><div class="sm-label">Fair Value</div><div class="sm-value">$' + fairValue.toFixed(2) + '</div></div>'
+          + '<div><div class="sm-label">Market Price</div><div class="sm-value">$' + liveWTI.toFixed(2) + '</div></div>'
+          + '<div><div class="sm-label">Edge</div><div class="sm-value" style="color:' + (edge >= 0 ? 'var(--green)' : 'var(--accent)') + '">' + (edge >= 0 ? '+' : '') + edge + '%</div></div>'
+          + '<div><div class="sm-label">Confidence</div><div class="sm-value">' + c.avg_confidence + '%</div></div>'
+          + '<div><div class="sm-label">Horizon</div><div class="sm-value">1 Week</div></div>'
+          + '<div><div class="sm-label">Vol Expansion P</div><div class="sm-value">' + c.vol_expansion_prob + '%</div></div>'
+          + '</div>'
+          + '<div class="signal-reasons">' + reasons + '</div>';
+
+        // Update EV fair value box
+        var evFV = document.getElementById('ev-fair-value');
+        if (evFV && fairValue > 0) evFV.innerHTML = '$' + fairValue.toFixed(2) + ' <span style="font-size:14px;color:var(--muted)">Fair Value</span>';
+        var evEdge = document.getElementById('ev-edge');
+        if (evEdge && liveWTI > 0) evEdge.textContent = 'Edge: ' + (edge >= 0 ? '+' : '') + '$' + Math.abs(fairValue - liveWTI).toFixed(2) + ' (' + (edge >= 0 ? '+' : '') + edge + '%) vs $' + liveWTI.toFixed(2) + ' market';
       }
 
       // Update ticker bar with live swarm data
