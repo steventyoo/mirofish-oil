@@ -38,6 +38,19 @@ const FUNDAMENTALS = {
   // ═══ C-UAS / COUNTER-DRONE ═══
   AAON: { name: 'Anduril (Private)', sector: 'cuas', marketCap: 28e9, pe: null, forwardPE: null, ps: null, evEbitda: null, revenue: 0.8e9, ebitda: null, profitMargin: null, roe: null, revenueGrowth: 1.0, dividendYield: null, beta: null, fiftyTwoWeekHigh: null, fiftyTwoWeekLow: null, note: 'PRIVATE — Lattice AI, Altius drone, C-UAS' },
 
+  // ═══ ADDITIONAL DEFENSE ═══
+  BAH:  { name: 'Booz Allen Hamilton', sector: 'defense', marketCap: 10e9, pe: 13.4, forwardPE: 13.4, ps: 0.88, evEbitda: 10.2, revenue: 11.4e9, ebitda: 1.37e9, profitMargin: 0.065, roe: 0.751, revenueGrowth: 0.12, dividendYield: 0.021, beta: 0.35, fiftyTwoWeekHigh: 215, fiftyTwoWeekLow: 98, note: 'AI + Cyber + NatSec. P/E 45% below 10yr avg. Deepest value.' },
+  HON:  { name: 'Honeywell', sector: 'defense', marketCap: 137e9, pe: 21.2, forwardPE: 21.2, ps: 3.66, evEbitda: 17.1, revenue: 37.4e9, ebitda: 10.4e9, profitMargin: 0.14, roe: 0.261, revenueGrowth: 0.03, dividendYield: 0.022, beta: 0.90, fiftyTwoWeekHigh: 240, fiftyTwoWeekLow: 165, note: 'Aero spinoff Form 10 filed. Pure-play comps 22-28x EV/EBITDA.' },
+
+  // ═══ ENERGY SAFE BARRELS ═══
+  EQNR: { name: 'Equinor', sector: 'energy', marketCap: 105e9, pe: 11.1, forwardPE: 11.1, ps: 0.79, evEbitda: 2.25, revenue: 105.8e9, ebitda: 37.3e9, profitMargin: 0.12, roe: 0.122, revenueGrowth: 0.08, dividendYield: 0.045, beta: -0.27, fiftyTwoWeekHigh: 38, fiftyTwoWeekLow: 20, note: 'Cheapest energy: 2.25x EV/EBITDA. Negative beta. Pure safe-haven.' },
+  EGY:  { name: 'VAALCO Energy', sector: 'energy', marketCap: 0.6e9, pe: 5.5, forwardPE: 5.5, ps: 1.30, evEbitda: 2.55, revenue: 0.359e9, ebitda: 0.196e9, profitMargin: 0.22, roe: 0.077, revenueGrowth: 2.25, dividendYield: 0.067, beta: 0.93, fiftyTwoWeekHigh: 12, fiftyTwoWeekLow: 3.5, note: 'Africa upstream. 2.55x EV/EBITDA. 225% production growth. High risk/reward.' },
+
+  // ═══ TANKERS / SHIPPING / FERTILIZER ═══
+  FRO:  { name: 'Frontline', sector: 'shipping', marketCap: 6.9e9, pe: 6.8, forwardPE: 6.8, ps: 3.90, evEbitda: 15.5, revenue: 1.77e9, ebitda: 0.66e9, profitMargin: 0.14, roe: 0.093, revenueGrowth: 0.45, dividendYield: 0.081, beta: 0.05, fiftyTwoWeekHigh: 35, fiftyTwoWeekLow: 12, note: '41 VLCCs. Day rates >$200K. +136% YTD. Binary on Hormuz.' },
+  FLNG: { name: 'FLEX LNG', sector: 'shipping', marketCap: 1.6e9, pe: 11.6, forwardPE: 11.6, ps: 4.60, evEbitda: 10.75, revenue: 0.348e9, ebitda: 0.242e9, profitMargin: 0.30, roe: 0.127, revenueGrowth: 0.12, dividendYield: 0.103, beta: 0.45, fiftyTwoWeekHigh: 32, fiftyTwoWeekLow: 18, note: '53-74yr contract backlog. 10.3% div yield. Most durable cash flow in shipping.' },
+  CF:   { name: 'CF Industries', sector: 'shipping', marketCap: 18e9, pe: 11.4, forwardPE: 11.4, ps: 2.67, evEbitda: 5.38, revenue: 6.74e9, ebitda: 3.53e9, profitMargin: 0.28, roe: 0.22, revenueGrowth: 0.08, dividendYield: 0.016, beta: 0.69, fiftyTwoWeekHigh: 110, fiftyTwoWeekLow: 60, note: 'US fertilizer. 10.5% FCF yield. Gulf blockade = structural repricing. Best ROIC.' },
+
   // ═══ ENERGY MAJORS ═══
   XOM:  { name: 'Exxon Mobil', sector: 'energy', marketCap: 465e9, pe: 14.2, forwardPE: 13.5, ps: 1.30, evEbitda: 6.5, revenue: 340e9, ebitda: 62e9, profitMargin: 0.098, roe: 0.18, revenueGrowth: -0.02, dividendYield: 0.034, beta: 0.80, fiftyTwoWeekHigh: 126, fiftyTwoWeekLow: 95, note: 'Largest US oil major' },
   CVX:  { name: 'Chevron', sector: 'energy', marketCap: 280e9, pe: 15.5, forwardPE: 13.8, ps: 1.38, evEbitda: 6.8, revenue: 196e9, ebitda: 45e9, profitMargin: 0.098, roe: 0.13, revenueGrowth: -0.04, dividendYield: 0.042, beta: 0.85, fiftyTwoWeekHigh: 167, fiftyTwoWeekLow: 135, note: 'Integrated major, Permian + Guyana' },
@@ -80,7 +93,7 @@ export default async function handler(req, res) {
   try {
     // Filter out private companies (no ticker to fetch)
     const allSymbols = Object.keys(FUNDAMENTALS).filter(s => s !== 'AAON');
-    const results = { defense: [], drone: [], puredrone: [], space: [], sensor: [], cuas: [], energy: [], etfs: [] };
+    const results = { defense: [], drone: [], puredrone: [], space: [], sensor: [], cuas: [], shipping: [], energy: [], etfs: [] };
 
     // Fetch live prices in parallel
     const tickerMap = { FLIR: 'TDY' };

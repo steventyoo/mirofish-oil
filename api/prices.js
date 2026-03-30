@@ -12,6 +12,10 @@ const TICKERS = [
   'XOM', 'CVX', 'COP', 'OXY', 'SLB', 'HAL',
   // Oil ETFs
   'USO', 'SCO', 'UCO',
+  // Shipping / Tankers / Fertilizer
+  'FRO', 'FLNG', 'CF',
+  // Additional defense & energy
+  'BAH', 'HON', 'EQNR', 'EGY',
 ];
 
 async function fetchQuote(symbol) {

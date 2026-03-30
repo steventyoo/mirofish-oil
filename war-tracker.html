@@ -350,6 +350,11 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
   <div id="energy-table"><div class="note">Loading energy fundamentals...</div></div>
 </div>
 
+<div class="card" style="margin-bottom:16px;overflow-x:auto">
+  <div class="card-title"><span class="live"></span> Tankers / Shipping / Fertilizer — Hormuz Binary Plays</div>
+  <div id="shipping-table"><div class="note">Loading shipping fundamentals...</div></div>
+</div>
+
 <div class="card" style="margin-bottom:20px;overflow-x:auto">
   <div class="card-title"><span class="live"></span> Oil ETFs — Direct Oil Exposure</div>
   <div id="etf-table"><div class="note">Loading ETF data...</div></div>
@@ -560,6 +565,7 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
         'space-table': data.space,
         'sensor-table': data.sensor,
         'cuas-table': data.cuas,
+        'shipping-table': data.shipping,
         'energy-table': data.energy,
         'etf-table': data.etfs,
       };
@@ -571,7 +577,7 @@ html, body { min-height: 100%; background: var(--bg); font-family: 'IBM Plex San
       });
     } catch (e) {
       var msg = '<div class="note">Fundamentals: ' + e.message + '</div>';
-      ['defense-table','drone-table','puredrone-table','space-table','sensor-table','cuas-table','energy-table','etf-table'].forEach(function(id) {
+      ['defense-table','drone-table','puredrone-table','space-table','sensor-table','cuas-table','shipping-table','energy-table','etf-table'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.innerHTML = msg;
       });
