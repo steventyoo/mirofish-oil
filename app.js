@@ -7,6 +7,10 @@
 (function () {
   'use strict';
 
+  // ── LIVE SCENARIO PROBABILITIES (updated from Polymarket) ──
+  // Keys match the fair value calc: partial, full, war, statusQuo, demandShock, deescalation, opecCut
+  var liveScenarioProbs = null; // null = use defaults, object = live
+
   // ── RENDER: Regime Bars ──
   function renderRegimeBars() {
     const container = document.getElementById('regime-bars');
@@ -41,6 +45,29 @@
         <div class="ps-note">${s.note}</div>
       </div>`
     ).join('');
+  }
+
+  // ── RENDER: Scenarios with LIVE Polymarket probabilities ──
+  function renderScenariosLive() {
+    if (!liveScenarioProbs) return;
+    var container = document.getElementById('scenario-cards');
+    if (!container) return;
+    var p = liveScenarioProbs;
+    // Map live probs onto the scenario array (same order as SCENARIOS in data.js)
+    var probMap = [p.partial, p.full, p.opecCut, p.statusQuo, p.demandShock, p.deescalation];
+    var updated = SCENARIOS.map(function(s, i) {
+      var liveProb = probMap[i] !== undefined ? probMap[i] : s.probability;
+      return '<div class="ps ' + s.css + '">'
+        + '<div class="ps-label">' + s.name + ' · P=' + Math.round(liveProb * 100) + '%<span class="src" style="margin-left:6px;font-size:7px">LIVE</span></div>'
+        + '<div class="ps-prices">'
+        + '<span>Low <strong style="color:' + s.color + '">$' + s.price_low + '</strong></span>'
+        + '<span>Mid <strong style="color:' + s.color + '">$' + s.price_mid + '</strong></span>'
+        + '<span>High <strong style="color:' + s.color + '">$' + s.price_high + '</strong></span>'
+        + '</div>'
+        + '<div class="ps-note">' + s.note + '</div>'
+        + '</div>';
+    });
+    container.innerHTML = updated.join('');
   }
 
   // ── RENDER: Agents ──
@@ -485,6 +512,57 @@
         if (hiRisk) hiRisk.textContent = riskScore;
       }
 
+      // ── Derive scenario probabilities from Polymarket ──
+      // Hormuz normalization prob → disruption/blockade/de-escalation
+      // Iran strike prob → war premium
+      // Kharg Island hit → escalation indicator
+      var hormuzNorm = data['strait-of-hormuz-traffic-returns-to-normal-by-april-30'];
+      var iranStrike = data['what-will-iran-strike-by-march-31'] || data['what-will-the-usisrael-target-in-iran-by-march-31'];
+      var khargHit = data['will-the-kharg-island-oil-terminal-be-hit-by-march-31'];
+
+      var pNormalize = 0.25; // default
+      if (hormuzNorm && hormuzNorm.markets && hormuzNorm.markets[0]) {
+        var np = JSON.parse(hormuzNorm.markets[0].outcomePrices || '["0","0"]');
+        pNormalize = parseFloat(np[0]) || 0.25;
+      }
+
+      var pIranStrike = 0.10;
+      if (iranStrike && iranStrike.markets && iranStrike.markets[0]) {
+        var ip = JSON.parse(iranStrike.markets[0].outcomePrices || '["0","0"]');
+        pIranStrike = parseFloat(ip[0]) || 0.10;
+      }
+
+      var pKharg = 0.03;
+      if (khargHit && khargHit.markets && khargHit.markets[0]) {
+        var kp = JSON.parse(khargHit.markets[0].outcomePrices || '["0","0"]');
+        pKharg = parseFloat(kp[0]) || 0.03;
+      }
+
+      // Map to scenario probabilities
+      var disruption = 1 - pNormalize; // total disruption probability
+      var pWar = Math.min(pKharg + pIranStrike * 0.15, 0.08);         // regional war: Kharg hit + Iran escalation
+      var pFull = Math.min(disruption * 0.15 + pKharg * 0.5, 0.15);   // full blockade
+      var pPartial = Math.max(disruption - pFull - pWar, 0.05);        // partial disruption (remainder of disruption)
+      var pDeescalation = Math.max(pNormalize * 0.7, 0.03);            // de-escalation tracks normalization
+      var pDemandShock = 0.12;                                          // macro driven, not on Polymarket
+      // OPEC + Status Quo split the remainder
+      var remainder = Math.max(1 - pPartial - pFull - pWar - pDeescalation - pDemandShock, 0.10);
+      var pOpec = remainder * 0.52;
+      var pStatusQuo = remainder * 0.48;
+
+      liveScenarioProbs = {
+        partial: Math.round(pPartial * 100) / 100,
+        full: Math.round(pFull * 100) / 100,
+        war: Math.round(pWar * 100) / 100,
+        statusQuo: Math.round(pStatusQuo * 100) / 100,
+        demandShock: Math.round(pDemandShock * 100) / 100,
+        deescalation: Math.round(pDeescalation * 100) / 100,
+        opecCut: Math.round(pOpec * 100) / 100,
+      };
+
+      // Re-render scenarios with live probs
+      renderScenariosLive();
+
       return;
     }
 
@@ -866,18 +944,18 @@
         var wtiEl = document.getElementById('lp-wti-price');
         if (wtiEl) { var m = wtiEl.textContent.match(/\$([\d.]+)/); if (m) liveWTI = parseFloat(m[1]); }
         // Fair value from scenario-weighted expected value
-        // Uses the same scenario probabilities as the Scenario Engine
-        // Partial (18%) + Full (5%) + War (2%) + Status Quo (28%) + Demand Shock (12%) + De-escalation (7%) + OPEC Cut (28%)
+        // Uses LIVE probabilities from Polymarket when available, else defaults
         var fairValue = 0;
         if (liveWTI > 0) {
+          var sp = liveScenarioProbs || { partial: 0.18, full: 0.05, war: 0.02, statusQuo: 0.28, demandShock: 0.12, deescalation: 0.07, opecCut: 0.28 };
           fairValue = Math.round((
-            0.18 * (liveWTI * 1.35) +  // Partial disruption: +35%
-            0.05 * (liveWTI * 1.75) +  // Full blockade: +75%
-            0.02 * (liveWTI * 2.30) +  // Regional war: +130%
-            0.28 * (liveWTI * 1.0) +   // Status quo: flat
-            0.12 * (liveWTI * 0.85) +  // Demand shock: -15%
-            0.07 * (liveWTI * 0.92) +  // De-escalation: -8%
-            0.28 * (liveWTI * 1.05)    // OPEC cut: +5%
+            sp.partial      * (liveWTI * 1.35) +  // Partial disruption: +35%
+            sp.full         * (liveWTI * 1.75) +  // Full blockade: +75%
+            sp.war          * (liveWTI * 2.30) +  // Regional war: +130%
+            sp.statusQuo    * (liveWTI * 1.0) +   // Status quo: flat
+            sp.demandShock  * (liveWTI * 0.85) +  // Demand shock: -15%
+            sp.deescalation * (liveWTI * 0.92) +  // De-escalation: -8%
+            sp.opecCut      * (liveWTI * 1.05)    // OPEC cut: +5%
           ) * 100) / 100;
         }
         var edge = liveWTI > 0 ? Math.round(((fairValue - liveWTI) / liveWTI) * 1000) / 10 : 0;
